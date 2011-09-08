@@ -11,6 +11,9 @@
 			font-size: 80%;
 			color: #888;
 		}
+		pre {
+			color: #888;
+		}
 	</style>
 </head>
 <body>
@@ -24,32 +27,31 @@
 <script>
 
 	var tgt = document.getElementById('target')
-	tgt.onmouseout = function() {
-		dbg("mouse out")
-	}
-
 	var prg = document.getElementById('progress')
 
 	function dbg(s) {
 		var e = document.getElementById('dbg')
-		e.innerHTML = s+"<br>\n"+e.innerHTML
+		e.innerHTML = s+"<br>"+e.innerHTML
 	}
 	function cbStatus(xfers) {
 		var s = ""
 		
 		if(xfers.done)
-			s = "Done."
-		else
+			s = "Done.<br>"
+
+		s += "Finished "+xfers.filesDone+" of "+xfers.filesTotal+" files<br>"
+
+		if(xfers.filesFailed > 0)
+			s += xfers.filesFailed+" files failed<br>"
+
 		if(xfers.current)
-			s += xfers.current.fileName+" ("+xfers.filesDone+" of "+xfers.filesTotal+")"
-		else
-			s = "Stand by ...";
+			s += "Sending "+xfers.current.fileName+"<br>"
+
+		s += "Progress "+xfers.percent+"%<br>"
 
 		prg.innerHTML = s
 
-		dbg("status: "+xfers.percent+"% ("+xfers.sofar+" / "+xfers.total+")")
-		if(xfers.done)
-			dbg("done!")
+		dbg("<pre>"+s+"</pre>"); //dbg(JSON.stringify(xfers))
 	}
 	function cbEnter() {
 		tgt.style.color = "#0f0";

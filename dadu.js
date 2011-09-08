@@ -10,8 +10,8 @@ if(typeof process == 'undefined') {
 		xfers: { files: [] },
 
 		add: function(target, cbStatus, cbEnter, cbLeave) {
+			var xfers = dadu.xfers
 			var nop = function() {}
-			
 
 			if(typeof target === "string")
 				target = document.getElementById(target)
@@ -35,22 +35,24 @@ if(typeof process == 'undefined') {
 			target.ondrop = function(event) {
 
 				(cbLeave || nop)(event)
+				dbg("/drop/")
 
-				var xfers = dadu.xfers,
-					newFiles = event.dataTransfer.files, l = newFiles.length, i,
-					file, tick
+				var newFiles = event.dataTransfer.files
+				var l = newFiles.length
+				var i, file, tick
 
-				if(xfers.files.length < 1) {
-					// nothing in the queue.  clear counts and arrays
+				if(xfers.files.length < 1 && !xfers.current) {
+					// nothing in queue or in transit; clear counts and arrays
+					dbg("clearing ...")
 					xfers.ok = []
 					xfers.error = []
-					xfers.abort = []
 					xfers.current = null
 					xfers.filesTotal = 0
 					xfers.filesDone = 0
-					xfers.total = 1
-					xfers.sofar = 1
-					xfers.percent = 1
+					xfers.filesFaild = 0
+					xfers.total = 0
+					xfers.sofar = 0
+					xfers.percent = 0
 					xfers.done = false
 				}
 
@@ -60,92 +62,99 @@ if(typeof process == 'undefined') {
 					xfers.files.push(file)
 					xfers.total += file.fileSize
 					xfers.filesTotal++
+					dbg("queueing "+file.fileName+" "+file.fileSize)
 				}
 
-				tick = function() {
-					var r, file, i, loc = document.location, url, l = xfers.files.length
+				dadu.tick()
+			}
+		},
 
-					if(!xfers.current) {
-						// nothing currently being sent
-						if(l < 1) {
-							// queue drained. make one last status callback with done=true
-							xfers.done = true;
-							xfers.sofar = xfers.total
-							xfers.percent = 100
-							if(cbStatus)
-								cbStatus(xfers)
-							return	// return, don't restart timer
-						}
+		tick: function() {
+			var loc = document.location
+			var xfers = dadu.xfers
+			var l = xfers.files.length
+			var r, file, i, url
 
-						// get next file from queue
-						file = xfers.files.shift()
-
-						// start sending it
-						if(typeof ActiveXObject != "undefined") 
-							r = new ActiveXObject("Microsoft.XMLHTTP");
-						else
-							r = new XMLHttpRequest();
-						r.upload.addEventListener("progress", function(e) {
-							if(e.lengthComputable)
-								file.loaded = e.loaded 
-						})
-						r.onload = function() {
-							file.ok = true
-							xfers.ok.push(file)
-							xfers.current = null
-							xfers.filesDone++
-						}
-						r.upload.addEventListener("error", function(e) {
-							file.error = e
-							xfers.error.push(file)
-							xfers.current = null
-						})
-						r.upload.addEventListener("abort", function(e) {
-							file.aborted = e
-							xfers.abort.push(file)
-							xfers.current = null
-						})
-						url = loc.protocol +
-								"//" +
-								loc.hostname +
-								":4080/?file=" +
-								encodeURIComponent(file.fileName)
-						r.open("POST", url, true);
-						r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
-						r.send(file);
-
-						// make this the current transfer in progress
-						xfers.current = file
-					}
-
-
-					// compute overall progress
-					xfers.sofar = 0
-					for(i = 0; i < xfers.ok.length; i++) {
-						xfers.sofar += xfers.ok[i].fileSize
-					}
-					for(i = 0; i < xfers.error.length; i++) {
-						xfers.sofar += xfers.error[i].fileSize
-					}
-					if(xfers.current) {
-						xfers.sofar += xfers.current.loaded || 0
-					}
-					xfers.percent = Math.floor((xfers.sofar * 100) / xfers.total)
-
-
-					// call back with current status
+			if(!xfers.current) {
+				// nothing currently being sent
+				if(l < 1) {
+					// queue drained. make one last status callback with done=true
+					xfers.done = true;
+					xfers.sofar = xfers.total
+					xfers.percent = 100
 					if(cbStatus)
 						cbStatus(xfers)
-
-
-					// again
-					setTimeout(tick, 2000)
+					return	// return, don't restart timer
 				}
 
-				tick()
+				// get next file from queue
+				file = xfers.files.shift()
 
+				// make this the current transfer in progress
+				xfers.current = file
+
+				// start sending it
+				if(typeof ActiveXObject != "undefined") 
+					r = new ActiveXObject("Microsoft.XMLHTTP");
+				else
+					r = new XMLHttpRequest();
+				r.upload.addEventListener("progress", function(e) {
+					if(e.lengthComputable)
+						file.loaded = e.loaded 
+				})
+				r.onload = function() {
+					dbg("onload: "+r.responseText);
+					file.ok = true
+					xfers.ok.push(file)
+					xfers.current = null
+					xfers.filesDone++
+				}
+				r.upload.addEventListener("error", function(e) {
+					dbg("error")
+					file.error = e
+					xfers.error.push(file)
+					xfers.filesFailed++
+					xfers.current = null
+				})
+				r.upload.addEventListener("abort", function(e) {
+					dbg("abort")
+					file.aborted = e
+					xfers.error.push(file)
+					xfers.filesFailed++
+					xfers.current = null
+				})
+				url = loc.protocol +
+						"//" +
+						loc.hostname +
+						":4080/?file=" +
+						encodeURIComponent(file.fileName)
+				r.open("POST", url, true);
+				r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
+				r.send(file);
+				dbg("send() "+file.fileName)
 			}
 
+
+			// compute overall progress
+			xfers.sofar = 0
+			for(i = 0; i < xfers.ok.length; i++) {
+				xfers.sofar += xfers.ok[i].fileSize
+			}
+			for(i = 0; i < xfers.error.length; i++) {
+				xfers.sofar += xfers.error[i].fileSize
+			}
+			if(xfers.current) {
+				xfers.sofar += xfers.current.loaded || 0
+			}
+			xfers.percent = Math.floor((xfers.sofar * 100) / xfers.total)
+
+
+			// call back with current status
+			if(cbStatus)
+				cbStatus(xfers)
+
+			// again
+			setTimeout(dadu.tick, 2000)
 		}
 
 	}
@@ -218,6 +227,7 @@ else {
 	}
 
 	function accept(req, res) {
+		log3("accept "+req.method+" "+req.url)
 
 		var method = req.method
 		if(method == "GET")
@@ -266,9 +276,10 @@ else {
 			})
 			rs.addListener("end", function() {
 				log3("rs end")
+				rs.resume()		// took me forever to find this was needed
 				ws.end() 
 				// xxx
-				s = "ok"
+				s = "sendok"
 				res.writeHead(200, {
 					"Content-Type": "text/plain",
 					"Content-Length": s.length
