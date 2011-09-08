@@ -193,9 +193,10 @@ else {
 
 	var fs = require("fs")
 	var http = require("http")
+	var path = require("path")
 	var url = require("url")
-	var log = require("log5")
 	var util = require("util"); insp = util.inspect
+	var log = require("log5")
 
 	var crypto = require("crypto")
 	function sha1(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
@@ -265,18 +266,18 @@ else {
 			return fail(res, "naughty file name: "+file)
 		file = file.replace(/[^-._A-Za-z0-9]/g, "_")
 
-		var path = tmpPath
-		fs.mkdir(path, 0777, function(e) {
-			var hash = sha1(file + Date())
+		var fpath = tmpPath
+		fs.mkdir(fpath, 0777, function(e) {
+			var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
 
 			if(!e)
-				log3(path+" created")
+				log3(fpath+" created")
 
 			var rs = req
-			path = path+"/"+hash
-			log3("writing file to "+path)
+			fpath += "/" + hash
+			log3("writing file to " + fpath)
 
-			var ws = fs.createWriteStream(path)
+			var ws = fs.createWriteStream(fpath)
 
 			rs.resume();
 			rs.addListener("data", function(d) {
