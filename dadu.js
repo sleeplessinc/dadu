@@ -39,11 +39,13 @@ if(typeof process == 'undefined') {
 
 				var newFiles = event.dataTransfer.files
 				var l = newFiles.length
+				var ticking = true;
 				var i, file, tick
 
 				if(xfers.files.length < 1 && !xfers.current) {
 					// nothing in queue or in transit; clear counts and arrays
 					dbg("clearing ...")
+					ticking = false;
 					xfers.ok = []
 					xfers.error = []
 					xfers.current = null
@@ -65,7 +67,8 @@ if(typeof process == 'undefined') {
 					dbg("queueing "+file.fileName+" "+file.fileSize)
 				}
 
-				dadu.tick()
+				if(!ticking)
+					dadu.tick()
 			}
 		},
 
@@ -84,6 +87,8 @@ if(typeof process == 'undefined') {
 					xfers.percent = 100
 					if(cbStatus)
 						cbStatus(xfers)
+					if(dadu.tickID == 0)
+						clearInterval(dadu.tickID)
 					return	// return, don't restart timer
 				}
 
@@ -153,8 +158,7 @@ if(typeof process == 'undefined') {
 			if(cbStatus)
 				cbStatus(xfers)
 
-			// again
-			setTimeout(dadu.tick, 2000)
+			setTimeout(dadu.tick, 1000)
 		}
 
 	}
