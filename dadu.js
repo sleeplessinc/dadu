@@ -1,9 +1,29 @@
 
-// Copyright 2011 Sleepless Software Inc. All rights reserved. 
+/*
+Copyright 2011 Sleepless Software Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to
+deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE. 
+*/
 
 if(typeof process == 'undefined') {
 
-	// Assume we're running in a web browser
+	// This section of code is the browser client
 
 	var dadu = {
 
@@ -167,7 +187,7 @@ if(typeof process == 'undefined') {
 }
 else {
 
-	// Assume we're running in Node
+	// This section of code is the node.js server
 
 	require.paths.unshift("../node_modules")
 
@@ -198,10 +218,10 @@ else {
 
 	// Static pages delivered using paperboy
 	var boy = require("paperboy")
-	function www(req, res) {
-		log3("boy: "+req.url)
+	function www(req, res, root) {
+		log3("www() root="+root)
 		boy
-			.deliver(process.cwd(), req, res)
+			.deliver(root, req, res)
 			.before(function() {
 			})
 			.after(function() {
@@ -218,19 +238,11 @@ else {
 
 	function get(req, res) {
 		var url = req.url
+		var root = wwwPath
 
-		if(url == "/") {
-			req.url = "/dadu.html"
-			www(req, res)
-			return;
-		}
-
-		if(url == "/dadu.js") {
-			www(req, res)
-			return;
-		}
-
-		return fail(res, "file not found: "+url)
+		if(url == "/" || url == "/dadu.js")
+			root = homePath
+		www(req, res, root)
 	}
 
 	function accept(req, res) {
@@ -253,7 +265,7 @@ else {
 			return fail(res, "naughty file name: "+file)
 		file = file.replace(/[^-._A-Za-z0-9]/g, "_")
 
-		var path = "/tmp"
+		var path = tmpPath
 		fs.mkdir(path, 0777, function(e) {
 			var hash = sha1(file + Date())
 
@@ -262,7 +274,7 @@ else {
 
 			var rs = req
 			path = path+"/"+hash
-			log3("tmp fs path is "+path)
+			log3("writing file to "+path)
 
 			var ws = fs.createWriteStream(path)
 
@@ -288,7 +300,6 @@ else {
 				log3("rs end")
 				rs.resume()		// took me forever to find this was needed
 				ws.end() 
-				// xxx
 				s = hash
 				res.writeHead(200, {
 					"Content-Type": "text/plain",
@@ -319,7 +330,11 @@ else {
 
 	}
 
+	// xxx override these with cmd line args
 	var port = 4080
+	var tmpPath = "/tmp"
+	var wwwPath = tmpPath
+	var homePath = process.cwd()
 	logLevel = 5
 
 	http.createServer(accept).listen(port)
