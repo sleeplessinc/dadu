@@ -15,6 +15,7 @@
 	<div id=target> [ DROP FILES HERE TO UPLOAD ] </div>
 	<div id=progress></div>
 </div>
+<div id=links></div>
 <div id=dbg></div>
 
 
@@ -23,6 +24,7 @@
 
 	var target = document.getElementById('target')
 	var progress = document.getElementById('progress')
+	var links = document.getElementById('links')
 
 	function dbg(s) {
 		var e = document.getElementById('dbg')
@@ -30,6 +32,7 @@
 	}
 
 	dadu.add('target', function(xfers) {
+
 		var s = ""
 		if(xfers.done)
 			s = "Done.<br>"
@@ -40,7 +43,17 @@
 			s += "Sending "+xfers.current.fileName+"<br>"
 		s += "Progress "+xfers.percent+"%<br>"
 		progress.innerHTML = s
+
 		dbg("<pre>"+s+"</pre>");
+
+	
+		s = ""
+		for(var i = 0; i < xfers.ok.length; i++) {
+			var f = xfers.ok[i]
+			s += "<a href='/"+f.hashName+"'>"+f.fileName+"</a><br>"
+		}
+		links.innerHTML = s
+
 	}, function() {
 		target.style.color = "#0f0";
 	}, function() {

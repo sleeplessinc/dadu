@@ -129,8 +129,10 @@ if(typeof process == 'undefined') {
 						file.loaded = e.loaded 
 				})
 				r.onload = function() {
-					dbg("onload: "+r.responseText);
+					var hashName = r.responseText;
+					dbg("onload: "+hashName)
 					file.ok = true
+					file.hashName = hashName
 					xfers.ok.push(file)
 					xfers.current = null
 					xfers.filesDone++
@@ -333,7 +335,7 @@ else {
 
 	// xxx override these with cmd line args
 	var port = 4080
-	var tmpPath = "/tmp"
+	var tmpPath = "/tmp/dadu"
 	var wwwPath = tmpPath
 	var homePath = process.cwd()
 	logLevel = 5
