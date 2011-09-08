@@ -67,12 +67,13 @@ if(typeof process == 'undefined') {
 					dbg("queueing "+file.fileName+" "+file.fileSize)
 				}
 
+
 				if(!ticking)
-					dadu.tick()
+					dadu.tick(cbStatus)
 			}
 		},
 
-		tick: function() {
+		tick: function(cbStatus) {
 			var loc = document.location
 			var xfers = dadu.xfers
 			var l = xfers.files.length
@@ -158,7 +159,7 @@ if(typeof process == 'undefined') {
 			if(cbStatus)
 				cbStatus(xfers)
 
-			setTimeout(dadu.tick, 1000)
+			setTimeout(dadu.tick, 1000, cbStatus)
 		}
 
 	}
@@ -176,6 +177,8 @@ else {
 	var log = require("log5")
 	var util = require("util"); insp = util.inspect
 
+	var crypto = require("crypto")
+	function sha1(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
 
 	var nop = function(){}
 
@@ -252,11 +255,14 @@ else {
 
 		var path = "/tmp"
 		fs.mkdir(path, 0777, function(e) {
+			var hash = sha1(file + Date())
 
-			log3("mkdir "+(e ? "exists" : "created")+" "+path)
+			if(!e)
+				log3(path+" created")
+
 			var rs = req
-			path = path+"/"+file
-			log3("file path = "+path)
+			path = path+"/"+hash
+			log3("tmp fs path is "+path)
 
 			var ws = fs.createWriteStream(path)
 
@@ -267,7 +273,7 @@ else {
 					rs.pause()
 			})
 			ws.addListener("pause", function() {
-				log3("ws pause")
+				//log3("ws pause")
 				rs.pause()
 			})
 			ws.addListener("drain", function() {
@@ -275,7 +281,7 @@ else {
 				rs.resume()
 			})
 			ws.addListener("resume", function() {
-				log3("ws resume")
+				//log3("ws resume")
 				rs.resume()
 			})
 			rs.addListener("end", function() {
@@ -283,7 +289,7 @@ else {
 				rs.resume()		// took me forever to find this was needed
 				ws.end() 
 				// xxx
-				s = "sendok"
+				s = hash
 				res.writeHead(200, {
 					"Content-Type": "text/plain",
 					"Content-Length": s.length
@@ -291,18 +297,19 @@ else {
 				res.end(s)
 			})
 			rs.addListener("close", function(e) {
-				log3("rs close")
+				alert("unexpected codepath")
 				ws.end() 
 				fs.unlink(path)
 				fail(res, e)
 			})
 			rs.addListener("error", function(e) {
-				log3("rs error")
+				alert("unexpected codepath")
 				ws.end() 
 				fs.unlink(path)
 				fail(res, e)
 			})
 			ws.addListener("error", function(e) {
+				alert("unexpected codepath")
 				log3("ws error")
 				fs.unlink(path)
 				fail(res, e)

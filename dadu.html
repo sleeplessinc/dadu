@@ -1,63 +1,52 @@
 <html>
-<head>
-	<script src="/dadu.js"></script>
-	<style>
-		#box {
-			margin: 1em;
-			border: solid 1px black;
-			padding: 1em;
-		}
-		#progress {
-			font-size: 80%;
-			color: #888;
-		}
-		pre {
-			color: #888;
-		}
-	</style>
-</head>
 <body>
 
+
+<style>
+	#box {
+		margin: 2em;
+		border: solid 1px black;
+		padding: 2em;
+	}
+	#progress { color: #888; }
+	pre { color: #888; }
+</style>
 <div id=box>
 	<div id=target> [ DROP FILES HERE TO UPLOAD ] </div>
 	<div id=progress></div>
 </div>
 <div id=dbg></div>
 
+
+<script src="/dadu.js"></script>
 <script>
 
-	var tgt = document.getElementById('target')
-	var prg = document.getElementById('progress')
+	var target = document.getElementById('target')
+	var progress = document.getElementById('progress')
 
 	function dbg(s) {
 		var e = document.getElementById('dbg')
 		e.innerHTML = s+"<br>"+e.innerHTML
 	}
-	function cbStatus(xfers) {
+
+	dadu.add('target', function(xfers) {
 		var s = ""
-		
 		if(xfers.done)
 			s = "Done.<br>"
-
 		s += "Finished "+xfers.filesDone+" of "+xfers.filesTotal+" files<br>"
-
 		if(xfers.filesFailed > 0)
 			s += xfers.filesFailed+" files failed<br>"
-
 		if(xfers.current)
 			s += "Sending "+xfers.current.fileName+"<br>"
-
 		s += "Progress "+xfers.percent+"%<br>"
+		progress.innerHTML = s
+		dbg("<pre>"+s+"</pre>");
+	}, function() {
+		target.style.color = "#0f0";
+	}, function() {
+		target.style.color = "#000";
+	})
 
-		prg.innerHTML = s
-
-		dbg("<pre>"+s+"</pre>"); //dbg(JSON.stringify(xfers))
-	}
-	function cbEnter() {
-		tgt.style.color = "#0f0";
-	}
-	function cbLeave() {
-		tgt.style.color = "#000";
-	}
-	dadu.add('target', cbStatus, cbEnter, cbLeave)
 </script>
+
+
