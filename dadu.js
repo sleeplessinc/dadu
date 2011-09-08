@@ -1,16 +1,15 @@
 
 // Copyright 2011 Sleepless Software Inc. All rights reserved. 
 
+if(typeof process == 'undefined') {
 
-function isBrowser() { return ((typeof process) == 'undefined') }
-
-if(isBrowser()) {
+	// Assume we're running in a web browser
 
 	var dadu = {
 
 		xfers: { files: [] },
 
-		add: function(target, url, cbStatus, cbEnter, cbLeave) {
+		add: function(target, cbStatus, cbEnter, cbLeave) {
 			var nop = function() {}
 			
 
@@ -34,6 +33,9 @@ if(isBrowser()) {
 			}
 
 			target.ondrop = function(event) {
+
+				(cbLeave || nop)(event)
+
 				var xfers = dadu.xfers,
 					newFiles = event.dataTransfer.files, l = newFiles.length, i,
 					file, tick
@@ -44,9 +46,11 @@ if(isBrowser()) {
 					xfers.error = []
 					xfers.abort = []
 					xfers.current = null
-					xfers.total = 0
-					xfers.sofar = 0
-					xfers.percent = 0
+					xfers.filesTotal = 0
+					xfers.filesDone = 0
+					xfers.total = 1
+					xfers.sofar = 1
+					xfers.percent = 1
 					xfers.done = false
 				}
 
@@ -55,17 +59,19 @@ if(isBrowser()) {
 					file = newFiles[i]
 					xfers.files.push(file)
 					xfers.total += file.fileSize
+					xfers.filesTotal++
 				}
 
 				tick = function() {
-					var r, file, i, loc = document.location
+					var r, file, i, loc = document.location, url, l = xfers.files.length
 
 					if(!xfers.current) {
 						// nothing currently being sent
-
 						if(l < 1) {
 							// queue drained. make one last status callback with done=true
 							xfers.done = true;
+							xfers.sofar = xfers.total
+							xfers.percent = 100
 							if(cbStatus)
 								cbStatus(xfers)
 							return	// return, don't restart timer
@@ -87,6 +93,7 @@ if(isBrowser()) {
 							file.ok = true
 							xfers.ok.push(file)
 							xfers.current = null
+							xfers.filesDone++
 						}
 						r.upload.addEventListener("error", function(e) {
 							file.error = e
@@ -120,8 +127,9 @@ if(isBrowser()) {
 					for(i = 0; i < xfers.error.length; i++) {
 						xfers.sofar += xfers.error[i].fileSize
 					}
-					if(xfers.current)
-						xfers.sofar += xfers.current.loaded
+					if(xfers.current) {
+						xfers.sofar += xfers.current.loaded || 0
+					}
 					xfers.percent = Math.floor((xfers.sofar * 100) / xfers.total)
 
 
@@ -144,6 +152,8 @@ if(isBrowser()) {
 
 }
 else {
+
+	// Assume we're running in Node
 
 	require.paths.unshift("../node_modules")
 
@@ -238,7 +248,7 @@ else {
 
 			rs.resume();
 			rs.addListener("data", function(d) {
-				log3("rs data "+d.length)
+				//log3("rs data "+d.length)
 				if(ws.write(d) === false)
 					rs.pause()
 			})
@@ -247,7 +257,7 @@ else {
 				rs.pause()
 			})
 			ws.addListener("drain", function() {
-				log3("ws drain")
+				//log3("ws drain")
 				rs.resume()
 			})
 			ws.addListener("resume", function() {

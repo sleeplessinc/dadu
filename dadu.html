@@ -1,11 +1,61 @@
 <html>
 <head>
 	<script src="/dadu.js"></script>
+	<style>
+		#box {
+			margin: 1em;
+			border: solid 1px black;
+			padding: 1em;
+		}
+		#progress {
+			font-size: 80%;
+			color: #888;
+		}
+	</style>
 </head>
 <body>
 
-<div id=target>TARGET</div>
+<div id=box>
+	<div id=target> [ DROP FILES HERE TO UPLOAD ] </div>
+	<div id=progress></div>
+</div>
+<div id=dbg></div>
 
 <script>
-	dadu.add('target')
+
+	var tgt = document.getElementById('target')
+	tgt.onmouseout = function() {
+		dbg("mouse out")
+	}
+
+	var prg = document.getElementById('progress')
+
+	function dbg(s) {
+		var e = document.getElementById('dbg')
+		e.innerHTML = s+"<br>\n"+e.innerHTML
+	}
+	function cbStatus(xfers) {
+		var s = ""
+		
+		if(xfers.done)
+			s = "Done."
+		else
+		if(xfers.current)
+			s += xfers.current.fileName+" ("+xfers.filesDone+" of "+xfers.filesTotal+")"
+		else
+			s = "Stand by ...";
+
+		prg.innerHTML = s
+
+		dbg("status: "+xfers.percent+"% ("+xfers.sofar+" / "+xfers.total+")")
+		if(xfers.done)
+			dbg("done!")
+	}
+	function cbEnter() {
+		tgt.style.color = "#0f0";
+	}
+	function cbLeave() {
+		tgt.style.color = "#000";
+	}
+	dadu.add('target', cbStatus, cbEnter, cbLeave)
 </script>
