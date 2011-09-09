@@ -195,13 +195,14 @@ else {
 	// This section of code is the node.js server.  It's ignored by the browser.
 
 	var x = exports
+	var test = (require.main === module)
 
 	var fs = require("fs")
 	var http = require("http")
 	var path = require("path")
 	var url = require("url")
 	var util = require("util"); insp = util.inspect
-	var log = require("log5").mkLog()
+	var log = require("log5").mkLog("dadu:")
 
 	var crypto = require("crypto")
 	var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
@@ -225,13 +226,13 @@ else {
 	// Static pages delivered using paperboy
 	var boy = require("paperboy")
 	var www = function(req, res, root) {
-		log(4, "www() root="+root)
+		log(3, "www() root="+root)
 		boy
 			.deliver(root, req, res)
 			.before(function() {
 			})
 			.after(function() {
-				log(2, "PB OK "+req.method+req.url)
+				log(2, req.method+req.url)
 			})
 			.error(function(e) {
 				fail(res, "error: "+req.url+": "+e)
@@ -249,7 +250,6 @@ else {
 		port: 4080,
 		tmpPath: "/tmp/dadu",
 		wwwPath: "/tmp/dadu",
-		homePath: process.cwd(),
 	}
 
 	x.Dadu = function(opts) {
@@ -263,17 +263,22 @@ else {
 
 		log(self.logLevel)
 
+		//for(key in self)
+		//	log(key+"= "+self[key])
+
 		self.get = function(req, res) {
 			var url = req.url
-			var root = self.wwwPath
-
-			if(url == "/" || url == "/dadu.js")
-				root = self.homePath
-			www(req, res, root)
+			if(test) {
+				if(url == "/" ||  url == "/dadu.js")
+					return www(req, res, path.dirname(module.filename))
+				else
+					return www(req, res, self.tmpPath)
+			}
+			fail(res, "file not found: "+req.url) 
 		}
 
 		self.accept = function(req, res) {
-			log(4, "accept "+req.method+" "+req.url)
+			log(3, "accept "+req.method+" "+req.url)
 
 			var method = req.method
 			if(method == "GET")
@@ -281,7 +286,7 @@ else {
 			if(method != "POST")
 				return fail(res, "method not supported: "+method+" "+req.url)
 
-			log(4, "POST "+req.url)
+			log(3, "POST "+req.url)
 
 			var u = url.parse(req.url, true)
 			var query = u.query
@@ -297,11 +302,11 @@ else {
 				var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
 
 				if(!e)
-					log(4, fpath+" created")
+					log(3, fpath+" created")
 
 				var rs = req
 				fpath += "/" + hash
-				log(2, "writing file to " + fpath)
+				log(3, "writing file to " + fpath)
 
 				var ws = fs.createWriteStream(fpath)
 
@@ -324,7 +329,7 @@ else {
 					rs.resume()
 				})
 				rs.addListener("end", function() {
-					log(4, "rs end")
+					log(3, "rs end")
 					rs.resume()		// took me forever to find this was needed
 					ws.end() 
 					s = hash
@@ -358,17 +363,21 @@ else {
 		}
 
 		self.listen = function(port) {
-			self.server.listen(port || self.port)
+			port = port || self.port
+			self.server.listen(port)
+			log(3, "listening on "+port);
 		}
 
 		self.server = http.createServer(self.accept)
 
 	}
 
-	if(require.main === module) {
+	//log(insp(module))
+
+	if(test) {
 		// run standalone in test mode
+		log("TEST MODE")
 		new x.Dadu({logLevel:5}).listen()
-		log(1, "Test mode: listening on "+x.defaults.port);
 	}
 
 }
