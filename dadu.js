@@ -229,6 +229,8 @@ else {
 		log(3, "www() root="+root)
 		boy
 			.deliver(root, req, res)
+			//.addHeader("Access-Control-Allow-Origin", "http://sleepless.com:3901")
+			//.addHeader("Access-Control-Max-Age", "0")
 			.before(function() {
 			})
 			.after(function() {
@@ -281,6 +283,15 @@ else {
 			log(3, "accept "+req.method+" "+req.url)
 
 			var method = req.method
+
+			if(method == "OPTIONS") {
+				res.writeHead(200, {
+					"Access-Control-Allow-Origin": "*",
+					"Access-Control-Max-Age": "0",
+				})
+				res.end()
+				return;
+			}
 			if(method == "GET")
 				return self.get(req, res)
 			if(method != "POST")
@@ -334,6 +345,8 @@ else {
 					ws.end() 
 					s = hash
 					res.writeHead(200, {
+						"Access-Control-Allow-Origin": "*",
+						"Access-Control-Max-Age": "0",
 						"Content-Type": "text/plain",
 						"Content-Length": s.length
 					})
