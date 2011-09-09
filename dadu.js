@@ -29,7 +29,7 @@ if(typeof process == 'undefined') {
 
 		xfers: { files: [] },
 
-		add: function(target, cbStatus, cbEnter, cbLeave) {
+		add: function(target, cbStatus, cbEnter, cbLeave, cbSent) {
 			var xfers = dadu.xfers
 			var nop = function() {}
 
@@ -89,11 +89,11 @@ if(typeof process == 'undefined') {
 
 
 				if(!ticking)
-					dadu.tick(cbStatus)
+					dadu.tick(cbStatus, cbSent)
 			}
 		},
 
-		tick: function(cbStatus) {
+		tick: function(cbStatus, cbSent) {
 			var loc = document.location
 			var xfers = dadu.xfers
 			var l = xfers.files.length
@@ -137,6 +137,8 @@ if(typeof process == 'undefined') {
 					xfers.ok.push(file)
 					xfers.current = null
 					xfers.filesDone++
+					if(cbSent)
+						cbSent(file.fileName, file.hashName)
 				}
 				r.upload.addEventListener("error", function(e) {
 					dbg("error")
@@ -184,7 +186,7 @@ if(typeof process == 'undefined') {
 			if(cbStatus)
 				cbStatus(xfers)
 
-			setTimeout(dadu.tick, 1000, cbStatus)
+			setTimeout(dadu.tick, 1000, cbStatus, cbSent)
 		}
 
 	}
@@ -229,8 +231,7 @@ else {
 		log(3, "www() root="+root)
 		boy
 			.deliver(root, req, res)
-			//.addHeader("Access-Control-Allow-Origin", "http://sleepless.com:3901")
-			//.addHeader("Access-Control-Max-Age", "0")
+			.addHeader("Hooptious", "Gruntbuggly")
 			.before(function() {
 			})
 			.after(function() {
