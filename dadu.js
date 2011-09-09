@@ -242,6 +242,8 @@ else {
 	}
 
 
+	x.log = log		// allows outside code to provide a shared log5 log() function
+
 	x.defaults = {
 		logLevel: 0,
 		port: 4080,
