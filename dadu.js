@@ -201,7 +201,7 @@ else {
 	var path = require("path")
 	var url = require("url")
 	var util = require("util"); insp = util.inspect
-	var log5 = require("log5"); log5.inherit(x)
+	var log = require("log5").log
 
 	var crypto = require("crypto")
 	var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
@@ -212,7 +212,7 @@ else {
 		var rc = 500
 
 		why = why || "mystery"
-		x.log1("FAIL: "+why)
+		log(1, "FAIL: "+why)
 		s = "ERROR "+rc
 		res.writeHead(rc, {
 			"Content-Type": "text/plain",
@@ -225,13 +225,13 @@ else {
 	// Static pages delivered using paperboy
 	var boy = require("paperboy")
 	var www = function(req, res, root) {
-		x.log4("www() root="+root)
+		log(4, "www() root="+root)
 		boy
 			.deliver(root, req, res)
 			.before(function() {
 			})
 			.after(function() {
-				x.log2("PB OK "+req.method+req.url)
+				log(2, "PB OK "+req.method+req.url)
 			})
 			.error(function(e) {
 				fail(res, "error: "+req.url+": "+e)
@@ -252,11 +252,14 @@ else {
 
 	x.Dadu = function(opts) {
 		var self = this
-		var opts = opts || x.defaults
 
-		self.opts = opts 
+		for(key in x.defaults)
+			self[key] = x.defaults[key]
 		for(key in opts)
 			self[key] = opts[key]
+		self.opts = opts 
+
+		log(self.logLevel)
 
 		self.get = function(req, res) {
 			var url = req.url
@@ -268,7 +271,7 @@ else {
 		}
 
 		self.accept = function(req, res) {
-			x.log4("accept "+req.method+" "+req.url)
+			log(4, "accept "+req.method+" "+req.url)
 
 			var method = req.method
 			if(method == "GET")
@@ -276,7 +279,7 @@ else {
 			if(method != "POST")
 				return fail(res, "method not supported: "+method+" "+req.url)
 
-			x.log4("POST "+req.url)
+			log(4, "POST "+req.url)
 
 			var u = url.parse(req.url, true)
 			var query = u.query
@@ -292,34 +295,34 @@ else {
 				var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
 
 				if(!e)
-					x.log4(fpath+" created")
+					log(4, fpath+" created")
 
 				var rs = req
 				fpath += "/" + hash
-				x.log2("writing file to " + fpath)
+				log(2, "writing file to " + fpath)
 
 				var ws = fs.createWriteStream(fpath)
 
 				rs.resume();
 				rs.addListener("data", function(d) {
-					//x.log3("rs data "+d.length)
+					//log(3, "rs data "+d.length)
 					if(ws.write(d) === false)
 						rs.pause()
 				})
 				ws.addListener("pause", function() {
-					//x.log3("ws pause")
+					//log(3, "ws pause")
 					rs.pause()
 				})
 				ws.addListener("drain", function() {
-					//x.log3("ws drain")
+					//log(3, "ws drain")
 					rs.resume()
 				})
 				ws.addListener("resume", function() {
-					//x.log3("ws resume")
+					//log(3, "ws resume")
 					rs.resume()
 				})
 				rs.addListener("end", function() {
-					x.log4("rs end")
+					log(4, "rs end")
 					rs.resume()		// took me forever to find this was needed
 					ws.end() 
 					s = hash
@@ -343,7 +346,7 @@ else {
 				})
 				ws.addListener("error", function(e) {
 					alert("unexpected codepath")
-					x.log1("ws error")
+					log(1, "ws error")
 					fs.unlink(path)
 					fail(res, e)
 				})
@@ -362,9 +365,10 @@ else {
 
 	if(require.main === module) {
 		// run standalone in test mode
-		x.logLevel = 5
+		console.log("dadu in test mode")
+		log(5)
 		new x.Dadu().listen()
-		x.log0("Test mode: listening on "+x.defaults.port);
+		log("Test mode: listening on "+x.defaults.port);
 	}
 
 }
