@@ -365,10 +365,8 @@ else {
 
 	if(require.main === module) {
 		// run standalone in test mode
-		console.log("dadu in test mode")
-		log(5)
-		new x.Dadu().listen()
-		log("Test mode: listening on "+x.defaults.port);
+		new x.Dadu({logLevel:5}).listen()
+		log(1, "Test mode: listening on "+x.defaults.port);
 	}
 
 }
