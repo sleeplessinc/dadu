@@ -3,6 +3,8 @@
 
 ## Install
 
+npm install dadu
+
 ## Example
 
 ## API
