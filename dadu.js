@@ -59,7 +59,7 @@ if(typeof process == 'undefined') {
 
 				var newFiles = event.dataTransfer.files
 				var l = newFiles.length
-				var ticking = true;
+				var ticking = true
 				var i, file, tick
 
 				if(xfers.files.length < 1 && !xfers.current) {
@@ -201,7 +201,7 @@ else {
 	var path = require("path")
 	var url = require("url")
 	var util = require("util"); insp = util.inspect
-	var log = require("log5").log
+	var log = require("log5").mkLog()
 
 	var crypto = require("crypto")
 	var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
