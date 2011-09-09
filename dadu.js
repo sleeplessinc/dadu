@@ -23,7 +23,7 @@ IN THE SOFTWARE.
 
 if(typeof process == 'undefined') {
 
-	// This section of code is the browser client
+	// This section of code is the browser client.  It's ignored by the node server
 
 	var dadu = {
 
@@ -129,7 +129,8 @@ if(typeof process == 'undefined') {
 						file.loaded = e.loaded 
 				})
 				r.onload = function() {
-					var hashName = r.responseText;
+					var hashName = r.responseText
+
 					dbg("onload: "+hashName)
 					file.ok = true
 					file.hashName = hashName
@@ -143,6 +144,7 @@ if(typeof process == 'undefined') {
 					xfers.error.push(file)
 					xfers.filesFailed++
 					xfers.current = null
+					xfers.filesDone++
 				})
 				r.upload.addEventListener("abort", function(e) {
 					dbg("abort")
@@ -150,6 +152,7 @@ if(typeof process == 'undefined') {
 					xfers.error.push(file)
 					xfers.filesFailed++
 					xfers.current = null
+					xfers.filesDone++
 				})
 				url = loc.protocol +
 						"//" +
@@ -189,27 +192,27 @@ if(typeof process == 'undefined') {
 }
 else {
 
-	// This section of code is the node.js server
+	// This section of code is the node.js server.  It's ignored by the browser.
 
-	require.paths.unshift("../node_modules")
+	var x = exports
 
 	var fs = require("fs")
 	var http = require("http")
 	var path = require("path")
 	var url = require("url")
 	var util = require("util"); insp = util.inspect
-	var log = require("log5")
+	var log5 = require("log5"); log5.inherit(x)
 
 	var crypto = require("crypto")
-	function sha1(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
+	var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
 
 	var nop = function(){}
 
-	function fail(res, why) {
+	var fail = function(res, why) {
 		var rc = 500
 
 		why = why || "mystery"
-		log3("FAIL: "+why)
+		x.log1("FAIL: "+why)
 		s = "ERROR "+rc
 		res.writeHead(rc, {
 			"Content-Type": "text/plain",
@@ -221,14 +224,14 @@ else {
 
 	// Static pages delivered using paperboy
 	var boy = require("paperboy")
-	function www(req, res, root) {
-		log3("www() root="+root)
+	var www = function(req, res, root) {
+		x.log4("www() root="+root)
 		boy
 			.deliver(root, req, res)
 			.before(function() {
 			})
 			.after(function() {
-				log3("PB OK "+req.method+req.url)
+				x.log2("PB OK "+req.method+req.url)
 			})
 			.error(function(e) {
 				fail(res, "error: "+req.url+": "+e)
@@ -239,109 +242,130 @@ else {
 	}
 
 
-	function get(req, res) {
-		var url = req.url
-		var root = wwwPath
-
-		if(url == "/" || url == "/dadu.js")
-			root = homePath
-		www(req, res, root)
+	x.defaults = {
+		logLevel: 0,
+		port: 4080,
+		tmpPath: "/tmp/dadu",
+		wwwPath: "/tmp/dadu",
+		homePath: process.cwd(),
 	}
 
-	function accept(req, res) {
-		log3("accept "+req.method+" "+req.url)
+	x.Dadu = function(opts) {
+		var self = this
+		var opts = opts || x.defaults
 
-		var method = req.method
-		if(method == "GET")
-			return get(req, res)
-		if(method != "POST")
-			return fail(res, "method not supported: "+method+" "+req.url)
+		self.opts = opts 
+		for(key in opts)
+			self[key] = opts[key]
 
-		log3("POST "+req.url)
+		self.get = function(req, res) {
+			var url = req.url
+			var root = self.wwwPath
 
-		var u = url.parse(req.url, true)
-		var query = u.query
-		var file = query.file
-		if(!file)
-			return fail(res, "no file name")
-		if(file.match("/\.\./"))
-			return fail(res, "naughty file name: "+file)
-		file = file.replace(/[^-._A-Za-z0-9]/g, "_")
+			if(url == "/" || url == "/dadu.js")
+				root = self.homePath
+			www(req, res, root)
+		}
 
-		var fpath = tmpPath
-		fs.mkdir(fpath, 0777, function(e) {
-			var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
+		self.accept = function(req, res) {
+			x.log4("accept "+req.method+" "+req.url)
 
-			if(!e)
-				log3(fpath+" created")
+			var method = req.method
+			if(method == "GET")
+				return self.get(req, res)
+			if(method != "POST")
+				return fail(res, "method not supported: "+method+" "+req.url)
 
-			var rs = req
-			fpath += "/" + hash
-			log3("writing file to " + fpath)
+			x.log4("POST "+req.url)
 
-			var ws = fs.createWriteStream(fpath)
+			var u = url.parse(req.url, true)
+			var query = u.query
+			var file = query.file
+			if(!file)
+				return fail(res, "no file name")
+			if(file.match("/\.\./"))
+				return fail(res, "naughty file name: "+file)
+			file = file.replace(/[^-._A-Za-z0-9]/g, "_")
 
-			rs.resume();
-			rs.addListener("data", function(d) {
-				//log3("rs data "+d.length)
-				if(ws.write(d) === false)
-					rs.pause()
-			})
-			ws.addListener("pause", function() {
-				//log3("ws pause")
-				rs.pause()
-			})
-			ws.addListener("drain", function() {
-				//log3("ws drain")
-				rs.resume()
-			})
-			ws.addListener("resume", function() {
-				//log3("ws resume")
-				rs.resume()
-			})
-			rs.addListener("end", function() {
-				log3("rs end")
-				rs.resume()		// took me forever to find this was needed
-				ws.end() 
-				s = hash
-				res.writeHead(200, {
-					"Content-Type": "text/plain",
-					"Content-Length": s.length
+			var fpath = self.tmpPath
+			fs.mkdir(fpath, 0777, function(e) {
+				var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
+
+				if(!e)
+					x.log4(fpath+" created")
+
+				var rs = req
+				fpath += "/" + hash
+				x.log2("writing file to " + fpath)
+
+				var ws = fs.createWriteStream(fpath)
+
+				rs.resume();
+				rs.addListener("data", function(d) {
+					//x.log3("rs data "+d.length)
+					if(ws.write(d) === false)
+						rs.pause()
 				})
-				res.end(s)
-			})
-			rs.addListener("close", function(e) {
-				alert("unexpected codepath")
-				ws.end() 
-				fs.unlink(path)
-				fail(res, e)
-			})
-			rs.addListener("error", function(e) {
-				alert("unexpected codepath")
-				ws.end() 
-				fs.unlink(path)
-				fail(res, e)
-			})
-			ws.addListener("error", function(e) {
-				alert("unexpected codepath")
-				log3("ws error")
-				fs.unlink(path)
-				fail(res, e)
+				ws.addListener("pause", function() {
+					//x.log3("ws pause")
+					rs.pause()
+				})
+				ws.addListener("drain", function() {
+					//x.log3("ws drain")
+					rs.resume()
+				})
+				ws.addListener("resume", function() {
+					//x.log3("ws resume")
+					rs.resume()
+				})
+				rs.addListener("end", function() {
+					x.log4("rs end")
+					rs.resume()		// took me forever to find this was needed
+					ws.end() 
+					s = hash
+					res.writeHead(200, {
+						"Content-Type": "text/plain",
+						"Content-Length": s.length
+					})
+					res.end(s)
+				})
+				rs.addListener("close", function(e) {
+					alert("unexpected codepath")
+					ws.end() 
+					fs.unlink(path)
+					fail(res, e)
+				})
+				rs.addListener("error", function(e) {
+					alert("unexpected codepath")
+					ws.end() 
+					fs.unlink(path)
+					fail(res, e)
+				})
+				ws.addListener("error", function(e) {
+					alert("unexpected codepath")
+					x.log1("ws error")
+					fs.unlink(path)
+					fail(res, e)
+				})
+
 			})
 
-		})
+		}
+
+		self.listen = function(port) {
+			self.server.listen(port || self.port)
+		}
+
+		self.server = http.createServer(self.accept)
 
 	}
 
-	// xxx override these with cmd line args
-	var port = 4080
-	var tmpPath = "/tmp/dadu"
-	var wwwPath = tmpPath
-	var homePath = process.cwd()
-	logLevel = 5
-
-	http.createServer(accept).listen(port)
-	log3("listening on "+port+"\n");
+	if(require.main === module) {
+		// run standalone in test mode
+		x.logLevel = 5
+		new x.Dadu().listen()
+		x.log0("Test mode: listening on "+x.defaults.port);
+	}
 
 }
 

@@ -42,7 +42,10 @@
 		if(xfers.current)
 			s += "Sending "+xfers.current.fileName+"<br>"
 		s += "Progress "+xfers.percent+"%<br>"
+		if(xfers.error.length > 0)
+			s += "Errors: "+xfers.error.length+"<br>"
 		progress.innerHTML = s
+
 
 		dbg("<pre>"+s+"</pre>");
 
