@@ -201,6 +201,7 @@ else {
 
 	var fs = require("fs")
 	var http = require("http")
+	var https = require("https")
 	var path = require("path")
 	var url = require("url")
 	var util = require("util"); insp = util.inspect
@@ -382,15 +383,20 @@ else {
 			log(3, "listening on "+port);
 		}
 
-		self.server = http.createServer(self.accept)
-
+		if(self.tlsKey && self.tlsCert) {
+			self.server = https.createServer({
+					key: fs.readFileSync(self.tlsKey),
+					cert: fs.readFileSync(self.tlsCert)
+			}, self.accept)
+		}
+		else {
+			self.server = http.createServer(self.accept)
+		}
 	}
 
 	x.createServer = function(opts) {
 		return new x.Dadu(opts)
 	}
-
-	//log(insp(module))
 
 	if(test) {
 		// run standalone in test mode
