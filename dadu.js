@@ -29,7 +29,7 @@ if(typeof process == 'undefined') {
 
 		xfers: { files: [] },
 
-		add: function(target, cbStatus, cbEnter, cbLeave, cbSent) {
+		target: function(target, cbStatus, cbEnter, cbLeave, cbSent) {
 			var xfers = dadu.xfers
 			var nop = function() {}
 
