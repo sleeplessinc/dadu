@@ -246,7 +246,7 @@ else {
 	}
 
 
-	x.log = log		// allows outside code to provide a shared log5 log() function
+	x.log = log	
 
 	x.defaults = {
 		logLevel: 0,
@@ -384,6 +384,10 @@ else {
 
 		self.server = http.createServer(self.accept)
 
+	}
+
+	x.createServer = function(opts) {
+		return new x.Dadu(opts)
 	}
 
 	//log(insp(module))
