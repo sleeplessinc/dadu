@@ -78,7 +78,8 @@ x.defaults = {
 	logLevel: 0,
 	port: 4080,
 	tmpPath: "/tmp/dadu",
-	wwwPath: "/tmp/dadu",
+	tlsKey: null,
+	tlsCert: null,
 }
 
 x.Dadu = function(opts) {
@@ -94,8 +95,10 @@ x.Dadu = function(opts) {
 
 	self.get = function(req, res) {
 		var url = req.url
+		if(url == "/dadu.js")
+			return www(req, res, path.dirname(module.filename))
 		if(test) {
-			if(url == "/" ||  url == "/dadu.js")
+			if(url == "/")
 				return www(req, res, path.dirname(module.filename))
 			else
 				return www(req, res, self.tmpPath)
@@ -203,8 +206,8 @@ x.Dadu = function(opts) {
 
 	if(self.tlsKey && self.tlsCert) {
 		self.server = https.createServer({
-				key: fs.readFileSync(self.tlsKey),
-				cert: fs.readFileSync(self.tlsCert)
+			key: fs.readFileSync(self.tlsKey),
+			cert: fs.readFileSync(self.tlsCert)
 		}, self.accept)
 	}
 	else {
