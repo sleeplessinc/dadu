@@ -150,6 +150,7 @@ x.Dadu = function(opts) {
 
 			rs.resume();
 			rs.addListener("data", function(d) {
+				//log(3, "data "+d)
 				if(ws.write(d) === false)
 					rs.pause()
 			})
@@ -176,21 +177,21 @@ x.Dadu = function(opts) {
 				res.end(s)
 			})
 			rs.addListener("close", function(e) {
-				alert("unexpected codepath")
+				log(1, "unexpected codepath")
 				ws.end() 
-				fs.unlink(path)
+				//fs.unlink(path, function(){})
 				fail(res, e)
 			})
 			rs.addListener("error", function(e) {
-				alert("unexpected codepath")
+				log(1, "unexpected codepath")
 				ws.end() 
-				fs.unlink(path)
+				//fs.unlink(path, function(){})
 				fail(res, e)
 			})
 			ws.addListener("error", function(e) {
-				alert("unexpected codepath")
+				log(1, "unexpected codepath")
 				log(1, "ws error")
-				fs.unlink(path)
+				//fs.unlink(path, function(){})
 				fail(res, e)
 			})
 
