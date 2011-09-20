@@ -52,7 +52,7 @@ var dadu = {
 		target.ondrop = function(event) {
 
 			(cbLeave || nop)(event)
-			dbg("/drop/")
+			//dbg("/drop/")
 
 			var newFiles = event.dataTransfer.files
 			var l = newFiles.length
@@ -60,7 +60,7 @@ var dadu = {
 
 			if(xfers.files.length < 1 && !xfers.current) {
 				// nothing in queue or in transit; clear counts and arrays
-				dbg("clearing ...")
+				//dbg("clearing ...")
 				xfers.ok = []
 				xfers.error = []
 				xfers.current = null
@@ -79,7 +79,7 @@ var dadu = {
 				xfers.files.push(file)
 				xfers.total += file.fileSize
 				xfers.filesTotal++
-				dbg("queueing "+file.fileName+" "+file.fileSize)
+				//dbg("queueing "+file.fileName+" "+file.fileSize)
 			}
 
 			dadu.tick(cbStatus, cbSent)
@@ -87,18 +87,18 @@ var dadu = {
 	},
 
 	tick: function(cbStatus, cbSent) {
-		dbg("dadu.tick");
+		//dbg("dadu.tick");
 		var loc = document.location
 		var xfers = dadu.xfers
 		var l = xfers.files.length
 		var r, file, i, url
 
 		if(!xfers.current) {
-			dbg("no xfer in progress ...")
+			//dbg("no xfer in progress ...")
 			// nothing currently being sent
 			if(l < 1) {
 				// queue drained. make one last status callback with done=true
-				dbg("no more files - last callback ...")
+				//dbg("no more files - last callback ...")
 				xfers.done = true;
 				xfers.sofar = xfers.total
 				xfers.percent = 100
@@ -109,7 +109,7 @@ var dadu = {
 
 			// get next file from queue
 			file = xfers.files.shift()
-			dbg("next file "+file.fileName)
+			//dbg("next file "+file.fileName)
 
 			// make this the current transfer in progress
 			xfers.current = file
@@ -126,7 +126,7 @@ var dadu = {
 			r.onload = function() {
 				var hashName = r.responseText
 
-				dbg("onload: "+hashName+" - " + file.fileName)
+				//dbg("onload: "+hashName+" - " + file.fileName)
 				file.ok = true
 				file.hashName = hashName
 				xfers.ok.push(file)
@@ -136,7 +136,7 @@ var dadu = {
 					cbSent(file.fileName, file.hashName)
 			}
 			r.upload.addEventListener("error", function(e) {
-				dbg("error: " + file.fileName)
+				//dbg("error: " + file.fileName)
 				file.error = e
 				xfers.error.push(file)
 				xfers.filesFailed++
@@ -144,7 +144,7 @@ var dadu = {
 				xfers.filesDone++
 			})
 			r.upload.addEventListener("abort", function(e) {
-				dbg("abort: " + file.fileName)
+				//dbg("abort: " + file.fileName)
 				file.aborted = e
 				xfers.error.push(file)
 				xfers.filesFailed++
@@ -159,7 +159,7 @@ var dadu = {
 			r.open("POST", url, true);
 			r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
 			r.send(file);
-			dbg("sending "+file.fileName+" url="+url)
+			//dbg("sending "+file.fileName+" url="+url)
 		}
 
 
@@ -181,7 +181,7 @@ var dadu = {
 		if(cbStatus)
 			cbStatus(xfers)
 
-		setTimeout(dadu.tick, 10000, cbStatus, cbSent)
+		setTimeout(dadu.tick, 1000, cbStatus, cbSent)
 	}
 
 }
