@@ -161,6 +161,7 @@ var dadu = {
 			r.open("POST", url, true);
 			r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
 			r.send(file);
+			dbg("url="+url)
 			dbg("send() "+file.fileName)
 		}
 
