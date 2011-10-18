@@ -79,6 +79,10 @@ var dadu = {
 				xfers.files.push(file)
 				xfers.total += file.fileSize
 				xfers.filesTotal++
+				if(file.fileName === undefined) {
+					// latest FF
+					file.fileName = file.name;
+				}
 				//dbg("queueing "+file.fileName+" "+file.fileSize)
 			}
 
