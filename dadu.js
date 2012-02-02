@@ -56,7 +56,7 @@ var dadu = {
 
 			var newFiles = event.dataTransfer.files
 			var l = newFiles.length
-			var i, file, tick
+			var i, file
 
 			if(xfers.files.length < 1 && !xfers.current) {
 				// nothing in queue or in transit; clear counts and arrays
@@ -91,7 +91,6 @@ var dadu = {
 	},
 
 	tick: function(cbStatus, cbSent) {
-		//dbg("dadu.tick");
 		var loc = document.location
 		var xfers = dadu.xfers
 		var l = xfers.files.length
