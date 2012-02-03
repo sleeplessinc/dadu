@@ -77,13 +77,13 @@ var dadu = {
 			for(i = 0; i < l; i++) {
 				file = newFiles[i]
 				xfers.files.push(file)
-				xfers.total += file.fileSize
+				xfers.total += file.size
 				xfers.filesTotal++
 				if(file.fileName === undefined) {
 					// latest FF
 					file.fileName = file.name;
 				}
-				//dbg("queueing "+file.fileName+" "+file.fileSize)
+				//dbg("queueing "+file.fileName+" "+file.size)
 			}
 
 			dadu.tick(cbStatus, cbSent)
@@ -169,10 +169,10 @@ var dadu = {
 		// compute overall progress
 		xfers.sofar = 0
 		for(i = 0; i < xfers.ok.length; i++) {
-			xfers.sofar += xfers.ok[i].fileSize
+			xfers.sofar += xfers.ok[i].size
 		}
 		for(i = 0; i < xfers.error.length; i++) {
-			xfers.sofar += xfers.error[i].fileSize
+			xfers.sofar += xfers.error[i].size
 		}
 		if(xfers.current) {
 			xfers.sofar += xfers.current.loaded || 0
