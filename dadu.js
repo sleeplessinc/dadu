@@ -26,7 +26,7 @@ var dadu = {
 
 	xfers: { files: [] },
 
-	target: function(target, cbStatus, cbEnter, cbLeave, cbSent) {
+	target: function(target, cbStatus, cbEnter, cbLeave, cbSent, url) {
 		var xfers = dadu.xfers
 		var nop = function() {}
 
@@ -86,15 +86,15 @@ var dadu = {
 				//dbg("queueing "+file.fileName+" "+file.size)
 			}
 
-			dadu.tick(cbStatus, cbSent)
+			dadu.tick(cbStatus, cbSent, url)
 		}
 	},
 
-	tick: function(cbStatus, cbSent) {
+	tick: function(cbStatus, cbSent, url) {
 		var loc = document.location
 		var xfers = dadu.xfers
 		var l = xfers.files.length
-		var r, file, i, url
+		var r, file, i 
 
 		if(!xfers.current) {
 			//dbg("no xfer in progress ...")
@@ -154,11 +154,10 @@ var dadu = {
 				xfers.current = null
 				xfers.filesDone++
 			})
-			url = loc.protocol +
-					"//" +
-					loc.hostname +
-					":4080/?file=" +
-					encodeURIComponent(file.fileName)
+			if(!url) {
+				url = loc.protocol + "//" + loc.hostname + ":4080"
+			}
+			url += "/?file="+encodeURIComponent(file.fileName)
 			r.open("POST", url, true);
 			r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
 			r.send(file);
@@ -184,7 +183,7 @@ var dadu = {
 		if(cbStatus)
 			cbStatus(xfers)
 
-		setTimeout(dadu.tick, 1000, cbStatus, cbSent)
+		setTimeout(dadu.tick, 1000, cbStatus, cbSent, url)
 	}
 
 }
