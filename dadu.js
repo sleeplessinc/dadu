@@ -52,7 +52,6 @@ var dadu = {
 		target.ondrop = function(event) {
 
 			(cbLeave || nop)(event)
-			//dbg("/drop/")
 
 			var newFiles = event.dataTransfer.files
 			var l = newFiles.length
@@ -60,7 +59,6 @@ var dadu = {
 
 			if(xfers.files.length < 1 && !xfers.current) {
 				// nothing in queue or in transit; clear counts and arrays
-				//dbg("clearing ...")
 				xfers.ok = []
 				xfers.error = []
 				xfers.current = null
@@ -83,7 +81,6 @@ var dadu = {
 					// latest FF
 					file.fileName = file.name;
 				}
-				//dbg("queueing "+file.fileName+" "+file.size)
 			}
 
 			dadu.tick(cbStatus, cbSent, url)
@@ -97,11 +94,9 @@ var dadu = {
 		var r, file, i 
 
 		if(!xfers.current) {
-			//dbg("no xfer in progress ...")
 			// nothing currently being sent
 			if(l < 1) {
 				// queue drained. make one last status callback with done=true
-				//dbg("no more files - last callback ...")
 				xfers.done = true;
 				xfers.sofar = xfers.total
 				xfers.percent = 100
@@ -112,7 +107,6 @@ var dadu = {
 
 			// get next file from queue
 			file = xfers.files.shift()
-			//dbg("next file "+file.fileName)
 
 			// make this the current transfer in progress
 			xfers.current = file
@@ -129,7 +123,6 @@ var dadu = {
 			r.onload = function() {
 				var hashName = r.responseText
 
-				//dbg("onload: "+hashName+" - " + file.fileName)
 				file.ok = true
 				file.hashName = hashName
 				xfers.ok.push(file)
@@ -139,7 +132,6 @@ var dadu = {
 					cbSent(file.fileName, file.hashName)
 			}
 			r.upload.addEventListener("error", function(e) {
-				//dbg("error: " + file.fileName)
 				file.error = e
 				xfers.error.push(file)
 				xfers.filesFailed++
@@ -147,7 +139,6 @@ var dadu = {
 				xfers.filesDone++
 			})
 			r.upload.addEventListener("abort", function(e) {
-				//dbg("abort: " + file.fileName)
 				file.aborted = e
 				xfers.error.push(file)
 				xfers.filesFailed++
@@ -161,7 +152,6 @@ var dadu = {
 			r.open("POST", url, true);
 			r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
 			r.send(file);
-			//dbg("sending "+file.fileName+" url="+url)
 		}
 
 
