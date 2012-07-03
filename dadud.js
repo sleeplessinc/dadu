@@ -51,7 +51,7 @@ var fail = function(res, why) {
 }
 
 
-// Static pages delivered using paperboy
+// Static files delivered using paperboy
 var boy = require("paperboy")
 var www = function(req, res, root) {
 	log(3, "www() root="+root)
