@@ -77,7 +77,7 @@ x.log = log
 x.defaults = {
 	logLevel: 0,
 	port: 4080,
-	tmpPath: "/tmp/dadu",
+	tmpPath: "./data",
 	tlsKey: null,
 	tlsCert: null,
 }
