@@ -137,7 +137,8 @@ x.Dadu = function(opts) {
 
 		var fpath = self.tmpPath
 		fs.mkdir(fpath, 0777, function(e) {
-			var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
+			//var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
+			var hash = file.toLowerCase().replace(/[^-._a-z0-9]+/g, "_");
 
 			if(!e)
 				log(3, fpath+" created")
