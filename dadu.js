@@ -136,6 +136,7 @@ var dadu = {
 					cbSent(file)
 			}
 			r.upload.addEventListener("error", function(e) {
+				alert('error');
 				file.error = e
 				xfers.error.push(file)
 				xfers.filesFailed++
@@ -143,6 +144,7 @@ var dadu = {
 				xfers.filesDone++
 			}, false)
 			r.upload.addEventListener("abort", function(e) {
+				alert('abort');
 				file.aborted = e
 				xfers.error.push(file)
 				xfers.filesFailed++
@@ -177,7 +179,7 @@ var dadu = {
 		if(cbStatus)
 			cbStatus(xfers)
 
-		setTimeout(dadu.tick, 1000, cbStatus, cbSent, url)
+		setTimeout(dadu.tick, 2000, cbStatus, cbSent, url)
 	}
 
 }
