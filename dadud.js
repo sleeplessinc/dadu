@@ -135,8 +135,11 @@ x.Dadu = function(opts) {
 			return fail(res, "naughty file name: "+file)
 		file = file.replace(/[^-._A-Za-z0-9]/g, "_")
 
+		log(3, "---- "+file)
+
 		var fpath = self.tmpPath
 		fs.mkdir(fpath, 0777, function(e) {
+			log(3, "---- m")
 			//var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
 			var hash = file.toLowerCase().replace(/[^-._a-z0-9]+/g, "_");
 
@@ -149,19 +152,23 @@ x.Dadu = function(opts) {
 
 			var ws = fs.createWriteStream(fpath)
 
-			rs.resume();
 			rs.addListener("data", function(d) {
-				//log(3, "data "+d)
-				if(ws.write(d) === false)
+				log(3, "data ")
+				if(ws.write(d) === false) {
+					log(3, " ... ");
 					rs.pause()
+				}
 			})
 			ws.addListener("pause", function() {
+				log(3, "pause ")
 				rs.pause()
 			})
 			ws.addListener("drain", function() {
+				log(3, "drain ")
 				rs.resume()
 			})
 			ws.addListener("resume", function() {
+				log(3, "resume ")
 				rs.resume()
 			})
 			rs.addListener("end", function() {
@@ -195,8 +202,10 @@ x.Dadu = function(opts) {
 				//fs.unlink(path, function(){})
 				fail(res, e)
 			})
+			rs.resume();
 
 		})
+		log(3, "---- x")
 
 	}
 
