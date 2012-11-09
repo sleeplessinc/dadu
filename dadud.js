@@ -31,6 +31,7 @@ var path = require("path")
 var url = require("url")
 var util = require("util"); insp = util.inspect
 var log = require("log5").mkLog("dadu:")
+var findit = require("findit")
 
 var crypto = require("crypto")
 var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
@@ -72,6 +73,50 @@ var www = function(req, res, root) {
 }
 
 
+var dir = function(req, res) {
+	var f =  findit.find("./data")
+	var first = true
+
+	res.write("[")
+
+	f.on('directory', function(p, stat) {
+		var s = "dir "+p+"\n"
+		log(3, s)
+	});
+
+	f.on('file', function(p, stat) {
+		stat.file = path.basename(p)
+		if(first)
+			first = false
+		else
+			res.write(",")
+		var s = res.write(JSON.stringify(stat))
+		log(3, p)
+	});
+
+	f.on('link', function(p, stat) {
+		var s = "link "+p+"\n"
+		log(3, s)
+	});
+
+	f.on('end', function() {
+		log(3, "end ")
+		res.end("]")
+	});
+}
+
+var del = function(req, res) {
+	var u = url.parse(req.url, true)
+	var query = u.query
+	var file = query.file
+
+	fs.unlink("data/"+file, function(e) {
+		res.end(e || "ok")
+	})
+}
+
+
+
 x.log = log	
 
 x.defaults = {
@@ -94,16 +139,20 @@ x.Dadu = function(opts) {
 	log(self.logLevel)
 
 	self.get = function(req, res) {
-		var url = req.url
-		if(url == "/dadu.js")
+		var u = req.url
+		if(u == "/dadu.js")
 			return www(req, res, path.dirname(module.filename))
+		if(u == "/dir")
+			return dir(req, res)
+		if(/^\/delete\?/.test(u))
+			return del(req, res)
 		if(test) {
-			if(url == "/")
+			if(u == "/")
 				return www(req, res, path.dirname(module.filename))
 			else
 				return www(req, res, self.tmpPath)
 		}
-		fail(res, "file not found: "+req.url) 
+		fail(res, "file not found: "+u) 
 	}
 
 	self.accept = function(req, res) {
@@ -156,29 +205,8 @@ x.Dadu = function(opts) {
 			rs.addListener("data", function(d) {
 				log(3, "r data "+d.length+" / "+rs.sofar)
 				rs.sofar += d.length;
-				//rs.pause()
 				ws.write(d, "binary")
-				/*if(ws.write(d, "binary") === false) {
-					log(3, " ... "+d.length)
-					rs.pause()
-					log(3, " (read paused) ")
-				}*/
 			})
-			/*
-			ws.addListener("pause", function() {
-				log(3, "w pause ")
-				rs.pause()
-			})
-			ws.addListener("drain", function() {
-				log(3, "w drain ")
-				rs.resume()
-			})
-			
-			ws.addListener("resume", function() {
-				log(3, "w resume ")
-				rs.resume()
-			})
-			*/
 			
 			rs.addListener("end", function() {
 				log(3, "r end "+rs.sofar)
@@ -199,50 +227,8 @@ x.Dadu = function(opts) {
 				})
 				res.end(j)
 
-				/*ws.addListener("drain", function() {
-					log(3, "w final drain ")
-					//rs.resume()
-				//	log(3, " (read resumed) ")
-					ws.end() 
-					o = {}
-					o.hash = hash
-					o.filename = ""		// XXX
-					o.size = 0		// XXX
-					o.ts = 0		// XXX
-					var j = JSON.stringify(o);
-					res.writeHead(200, {
-						"Access-Control-Allow-Origin": "*",
-						"Access-Control-Max-Age": "0",
-						"Content-Type": "text/plain",
-						"Content-Length": j.length
-					})
-					res.end(j)
-				})
-				*/
 			})
-			/*
-			rs.addListener("close", function(e) {
-				log(1, "r close")
-				ws.end() 
-				//fs.unlink(path, function(){})
-				fail(res, e)
-			})
-			rs.addListener("error", function(e) {
-				log(1, "r error")
-				ws.end() 
-				//fs.unlink(path, function(){})
-				fail(res, e)
-			})
-			ws.addListener("error", function(e) {
-				log(1, "ws error")
-				//fs.unlink(path, function(){})
-				fail(res, e)
-			})
-			rs.resume();
-			*/
-
 		})
-
 	}
 
 	self.listen = function(port) {

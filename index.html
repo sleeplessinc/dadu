@@ -10,17 +10,34 @@
 	}
 	pre, #progress { color: #888; }
 	#dbg { color: #800; }
+
+	div.file {
+		margin: 1em 0em;
+		color: #888;
+	}
+
 </style>
 <div id=box>
 	<div id=target> [ DROP FILES HERE TO UPLOAD ] </div>
 	<div id=progress>(progress)</div>
 </div>
-<div id=links>(links)</div>
+<div id=links>
+	<div id=proto_file class=file>
+		<a href="/__file__">__file__</a><br>
+		__size__ Bytes &mdash; __mtime__
+		<input type=button value=DELETE onclick="rmFile('__file__')">
+	</div>
+</div>
 <div id=dbg>(debug)</div>
 
 
+<script src="http://a1w.us/dadu.js"></script>
+<script src="http://a1w.us/protodiv.js"></script>
+<script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
 <script src="/dadu.js"></script>
 <script>
+
+	ProtoDiv.rere("proto_file", []);
 
 	var target = document.getElementById('target')
 	var progress = document.getElementById('progress')
@@ -31,43 +48,60 @@
 		e.innerHTML = s+"<br>"+e.innerHTML
 	}
 
-	dadu.target('target', function(xfers) {
-		// status
+	function dir() {
+		$.get("/dir", function(r) {
+			var a = JSON.parse(r);
+			ProtoDiv.rere("proto_file", a);
+		})
+	}
 
-		var s = ""
-		if(xfers.done)
-			s = "Done.<br>"
-		s += "Finished "+xfers.filesDone+" of "+xfers.filesTotal+" files<br>"
-		if(xfers.filesFailed > 0)
-			s += xfers.filesFailed+" files failed<br>"
-		if(xfers.current)
-			s += "Sending "+xfers.current.fileName+"<br>"
-		s += "Progress "+xfers.percent+"%<br>"
-		if(xfers.error.length > 0)
-			s += "Errors: "+xfers.error.length+"<br>"
-		progress.innerHTML = s
+	function rmFile(file) {
+		$.get("/delete?file="+file, function(r) {
+			dir()
+		})
+	}
+
+	$(document).ready(function() {
+		dadu.target('target', function(xfers) {
+			// status
+
+			var s = ""
+			if(xfers.done)
+				s = "Done.<br>"
+			s += "Finished "+xfers.filesDone+" of "+xfers.filesTotal+" files<br>"
+			if(xfers.filesFailed > 0)
+				s += xfers.filesFailed+" files failed<br>"
+			if(xfers.current)
+				s += "Sending "+xfers.current.fileName+"<br>"
+			s += "Progress "+xfers.percent+"%<br>"
+			if(xfers.error.length > 0)
+				s += "Errors: "+xfers.error.length+"<br>"
+			progress.innerHTML = s
 
 
-		dbg("<pre>"+s+"</pre>");
+			dbg("<pre>"+s+"</pre>");
 
-	
-		s = ""
-		for(var i = 0; i < xfers.ok.length; i++) {
-			var f = xfers.ok[i]
-			s += "<a href='/"+f.hashName+"'>"+f.fileName+"</a><br>"
-		}
-		//links.innerHTML = s
+		
+			s = ""
+			for(var i = 0; i < xfers.ok.length; i++) {
+				var f = xfers.ok[i]
+				s += "<a href='/"+f.hashName+"'>"+f.fileName+"</a><br>"
+			}
+			//links.innerHTML = s
 
-	}, function() {
-		// enter
-		target.style.color = "#0f0";
-	}, function() {
-		// leave
-		target.style.color = "#000";
-	}, function(file) {
-		// sent
-		var s = "<a href='/"+file.hashName+"'>"+file.fileName+"</a><br>"
-		links.innerHTML = links.innerHTML + s
+		}, function() {
+			// enter
+			target.style.color = "#0f0";
+		}, function() {
+			// leave
+			target.style.color = "#000";
+		}, function(file) {
+			// sent
+			// reload file list
+			dir()
+		})
+
+		dir()
 	})
 
 </script>
