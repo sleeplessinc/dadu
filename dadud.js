@@ -154,7 +154,7 @@ x.Dadu = function(opts) {
 			var ws = fs.createWriteStream(fpath)
 
 			rs.addListener("data", function(d) {
-				log(3, "r data "+d.length)
+				log(3, "r data "+d.length+" / "+rs.sofar)
 				rs.sofar += d.length;
 				//rs.pause()
 				ws.write(d, "binary")
@@ -182,7 +182,24 @@ x.Dadu = function(opts) {
 			
 			rs.addListener("end", function() {
 				log(3, "r end "+rs.sofar)
-				ws.addListener("drain", function() {
+
+				ws.end() 
+
+				o = {}
+				o.hash = hash
+				o.filename = ""		// XXX
+				o.size = 0		// XXX
+				o.ts = 0		// XXX
+				var j = JSON.stringify(o);
+				res.writeHead(200, {
+					"Access-Control-Allow-Origin": "*",
+					"Access-Control-Max-Age": "0",
+					"Content-Type": "text/plain",
+					"Content-Length": j.length
+				})
+				res.end(j)
+
+				/*ws.addListener("drain", function() {
 					log(3, "w final drain ")
 					//rs.resume()
 				//	log(3, " (read resumed) ")
@@ -201,6 +218,7 @@ x.Dadu = function(opts) {
 					})
 					res.end(j)
 				})
+				*/
 			})
 			/*
 			rs.addListener("close", function(e) {
