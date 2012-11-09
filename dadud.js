@@ -177,19 +177,19 @@ x.Dadu = function(opts) {
 				res.end(s)
 			})
 			rs.addListener("close", function(e) {
-				log(1, "unexpected codepath")
+				log(1, "unexpected codepath: rs.close")
 				ws.end() 
 				//fs.unlink(path, function(){})
 				fail(res, e)
 			})
 			rs.addListener("error", function(e) {
-				log(1, "unexpected codepath")
+				log(1, "unexpected codepath: rs.error")
 				ws.end() 
 				//fs.unlink(path, function(){})
 				fail(res, e)
 			})
 			ws.addListener("error", function(e) {
-				log(1, "unexpected codepath")
+				log(1, "unexpected codepath: ws.error")
 				log(1, "ws error")
 				//fs.unlink(path, function(){})
 				fail(res, e)
