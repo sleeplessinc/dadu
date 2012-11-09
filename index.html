@@ -32,6 +32,7 @@
 	}
 
 	dadu.target('target', function(xfers) {
+		// status
 
 		var s = ""
 		if(xfers.done)
@@ -55,12 +56,18 @@
 			var f = xfers.ok[i]
 			s += "<a href='/"+f.hashName+"'>"+f.fileName+"</a><br>"
 		}
-		links.innerHTML = s
+		//links.innerHTML = s
 
 	}, function() {
+		// enter
 		target.style.color = "#0f0";
 	}, function() {
+		// leave
 		target.style.color = "#000";
+	}, function(file) {
+		// sent
+		var s = "<a href='/"+file.hashName+"'>"+file.fileName+"</a><br>"
+		links.innerHTML = links.innerHTML + s
 	})
 
 </script>

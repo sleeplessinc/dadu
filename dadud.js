@@ -175,14 +175,19 @@ x.Dadu = function(opts) {
 				log(3, "rs end")
 				rs.resume()		// took me forever to find this was needed
 				ws.end() 
-				s = hash
+				o = {}
+				o.hash = hash
+				o.filename = ""		// XXX
+				o.size = 0		// XXX
+				o.ts = 0		// XXX
+				var j = JSON.stringify(o);
 				res.writeHead(200, {
 					"Access-Control-Allow-Origin": "*",
 					"Access-Control-Max-Age": "0",
 					"Content-Type": "text/plain",
-					"Content-Length": s.length
+					"Content-Length": j.length
 				})
-				res.end(s)
+				res.end(j)
 			})
 			rs.addListener("close", function(e) {
 				log(1, "unexpected codepath: rs.close")

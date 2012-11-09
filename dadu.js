@@ -1,6 +1,6 @@
 
 /*
-Copyright 2011 Sleepless Software Inc. All rights reserved.
+Copyright 2012 Sleepless Software Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
@@ -35,7 +35,7 @@ var dadu = {
 		if(typeof target !== "object")
 			target = document.body
 
-		target.ondragenter = function() {
+		target.ondragenter = function(event) {
 			event.preventDefault();
 			if(cbEnter)
 				cbEnter(event)
@@ -44,21 +44,24 @@ var dadu = {
 
 		target.ondragleave = cbLeave || nop
 
-		target.ondragover = function() {
+		target.ondragover = function(event) {
 			event.preventDefault();
 			return true;
 		}
 
 		target.ondrop = function(event) {
+			event.preventDefault();
 
 			(cbLeave || nop)(event)
 
 			var newFiles = event.dataTransfer.files
 			var l = newFiles.length
-			var i, file
+			var ticking = true
+			var i, file, tick
 
 			if(xfers.files.length < 1 && !xfers.current) {
 				// nothing in queue or in transit; clear counts and arrays
+				ticking = false
 				xfers.ok = []
 				xfers.error = []
 				xfers.current = null
@@ -83,7 +86,8 @@ var dadu = {
 				}
 			}
 
-			dadu.tick(cbStatus, cbSent, url)
+			if(!ticking)
+				dadu.tick(cbStatus, cbSent, url)
 		}
 	},
 
@@ -91,7 +95,7 @@ var dadu = {
 		var loc = document.location
 		var xfers = dadu.xfers
 		var l = xfers.files.length
-		var r, file, i 
+		var r, file, i , url
 
 		if(!xfers.current) {
 			// nothing currently being sent
@@ -119,17 +123,17 @@ var dadu = {
 			r.upload.addEventListener("progress", function(e) {
 				if(e.lengthComputable)
 					file.loaded = e.loaded 
-			})
+			}, false)
 			r.onload = function() {
 				var hashName = r.responseText
 
 				file.ok = true
-				file.hashName = hashName
+				file.hashName = JSON.parse(r.responseText).hash
 				xfers.ok.push(file)
 				xfers.current = null
 				xfers.filesDone++
 				if(cbSent)
-					cbSent(file.fileName, file.hashName)
+					cbSent(file)
 			}
 			r.upload.addEventListener("error", function(e) {
 				file.error = e
@@ -137,14 +141,14 @@ var dadu = {
 				xfers.filesFailed++
 				xfers.current = null
 				xfers.filesDone++
-			})
+			}, false)
 			r.upload.addEventListener("abort", function(e) {
 				file.aborted = e
 				xfers.error.push(file)
 				xfers.filesFailed++
 				xfers.current = null
 				xfers.filesDone++
-			})
+			}, false)
 			if(!url) {
 				url = loc.protocol + "//" + loc.hostname + ":4080"
 			}
