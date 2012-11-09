@@ -61,7 +61,7 @@ var www = function(req, res, root) {
 		.before(function() {
 		})
 		.after(function() {
-			log(2, req.method+req.url)
+			log(2, req.method+" "+req.url)
 		})
 		.error(function(e) {
 			fail(res, "error: "+req.url+": "+e)
@@ -77,7 +77,7 @@ x.log = log
 x.defaults = {
 	logLevel: 0,
 	port: 4080,
-	tmpPath: "./data",
+	tmpPath: "data",
 	tlsKey: null,
 	tlsCert: null,
 }
