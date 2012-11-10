@@ -179,7 +179,7 @@ var dadu = {
 		if(cbStatus)
 			cbStatus(xfers)
 
-		setTimeout(dadu.tick, 1000, cbStatus, cbSent, url)
+		setTimeout(dadu.tick, 250, cbStatus, cbSent, url)
 	}
 
 }

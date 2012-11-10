@@ -3,7 +3,7 @@
 
 
 <style>
-	#box, #links, #dbg {
+	.box {
 		margin: 2em;
 		border: solid 1px black;
 		padding: 2em;
@@ -15,20 +15,26 @@
 		margin: 1em 0em;
 		color: #888;
 	}
+	#target {
+		padding: 0.5em 1em;
+		border: dashed 4px #888;
+		background-color: #aaa;
+		margin: 1em 0em;
+	}
 
 </style>
-<div id=box>
-	<div id=target> [ DROP FILES HERE TO UPLOAD ] </div>
-	<div id=progress>(progress)</div>
+<div class=box>
+	<div id=target>[ DROP FILES HERE TO UPLOAD ]</div>
+	<div id=progress></div>
 </div>
-<div id=links>
+<div id=links class=box>
 	<div id=proto_file class=file>
 		<a href="/__file__">__file__</a><br>
 		__size__ Bytes &mdash; __mtime__
 		<input type=button value=DELETE onclick="rmFile('__file__')">
 	</div>
 </div>
-<div id=dbg>(debug)</div>
+<div id=dbg class=box></div>
 
 
 <script src="http://a1w.us/dadu.js"></script>
@@ -50,6 +56,7 @@
 
 	function dir() {
 		$.get("/dir", function(r) {
+			// XXX sort these alphabetically or something
 			var a = JSON.parse(r);
 			ProtoDiv.rere("proto_file", a);
 		})
@@ -79,22 +86,22 @@
 			progress.innerHTML = s
 
 
-			dbg("<pre>"+s+"</pre>");
+			//dbg("<pre>"+s+"</pre>");
 
 		
-			s = ""
-			for(var i = 0; i < xfers.ok.length; i++) {
-				var f = xfers.ok[i]
-				s += "<a href='/"+f.hashName+"'>"+f.fileName+"</a><br>"
-			}
+			//s = ""
+			//for(var i = 0; i < xfers.ok.length; i++) {
+			//	var f = xfers.ok[i]
+			//	s += "<a href='/"+f.hashName+"'>"+f.fileName+"</a><br>"
+			//}
 			//links.innerHTML = s
 
 		}, function() {
 			// enter
-			target.style.color = "#0f0";
+			target.style.backgroundColor = "#8bf";
 		}, function() {
 			// leave
-			target.style.color = "#000";
+			target.style.backgroundColor = "#aaa";
 		}, function(file) {
 			// sent
 			// reload file list

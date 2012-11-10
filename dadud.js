@@ -55,7 +55,7 @@ var fail = function(res, why) {
 // Static files delivered using paperboy
 var boy = require("paperboy")
 var www = function(req, res, root) {
-	log(3, "www() root="+root)
+	//log(3, "www() root="+root)
 	boy
 		.deliver(root, req, res)
 		.addHeader("Hooptious", "Gruntbuggly")
@@ -76,12 +76,13 @@ var www = function(req, res, root) {
 var dir = function(req, res) {
 	var f =  findit.find("./data")
 	var first = true
+	log(3, "dir")
 
 	res.write("[")
 
 	f.on('directory', function(p, stat) {
-		var s = "dir "+p+"\n"
-		log(3, s)
+		//var s = "dir "+p+"\n"
+		//log(3, s)
 	});
 
 	f.on('file', function(p, stat) {
@@ -91,16 +92,16 @@ var dir = function(req, res) {
 		else
 			res.write(",")
 		var s = res.write(JSON.stringify(stat))
-		log(3, p)
+		//log(3, p)
 	});
 
 	f.on('link', function(p, stat) {
-		var s = "link "+p+"\n"
-		log(3, s)
+		//var s = "link "+p+"\n"
+		//log(3, s)
 	});
 
 	f.on('end', function() {
-		log(3, "end ")
+		//log(3, "end ")
 		res.end("]")
 	});
 }
@@ -109,6 +110,7 @@ var del = function(req, res) {
 	var u = url.parse(req.url, true)
 	var query = u.query
 	var file = query.file
+	log(3, "delete "+file)
 
 	fs.unlink("data/"+file, function(e) {
 		res.end(e || "ok")
@@ -156,7 +158,7 @@ x.Dadu = function(opts) {
 	}
 
 	self.accept = function(req, res) {
-		log(3, "accept "+req.method+" "+req.url)
+		//log(3, "accept "+req.method+" "+req.url)
 
 		var method = req.method
 
@@ -184,8 +186,6 @@ x.Dadu = function(opts) {
 			return fail(res, "naughty file name: "+file)
 		file = file.replace(/[^-._A-Za-z0-9]/g, "_")
 
-		log(3, "---- "+file)
-
 		var fpath = self.tmpPath
 		fs.mkdir(fpath, 0777, function(e) {
 			
@@ -198,12 +198,12 @@ x.Dadu = function(opts) {
 			var rs = req
 			rs.sofar = 0;
 			fpath += "/" + hash
-			log(3, "writing file to " + fpath)
+			//log(3, "writing file to " + fpath)
 
 			var ws = fs.createWriteStream(fpath)
 
 			rs.addListener("data", function(d) {
-				log(3, "r data "+d.length+" / "+rs.sofar)
+				//log(3, "r data "+d.length+" / "+rs.sofar)
 				rs.sofar += d.length;
 				ws.write(d, "binary")
 			})
