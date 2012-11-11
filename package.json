@@ -1,6 +1,6 @@
 {
   "name": "dadu",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description" : "Drag and Drop Uploads",
   "author": "Joe Hitchens <joe@sleepless.com> (sleepless.com)",
   "license": {
@@ -13,5 +13,10 @@
       "url": "https://sleeplessinc@github.com/sleeplessinc/dadu.git"
     }
   ],
-  "repository": "git://github.com/sleeplessinc/dadu.git"
+  "repository": "git://github.com/sleeplessinc/dadu.git",
+  "dependencies":
+	  "log5"       : "1.2.9",
+	  "findit"       : "0.1.2",
+	  "paperboy"   : "0.0.5"
+  }
 }
