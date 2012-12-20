@@ -5,15 +5,16 @@
 
 	npm install dadu
 
-## Example
+There is only one source file  called "dadu.js" which
+handles both the server side and client side components.
+
+## Examples
 
 ### Server
 
 	dadu = require("dadu");
 	require('http').createServer(function(req, res) {
-
 		dadu.handleUpload(req, res);
-
 	}).listen(4080);
 
 
@@ -22,19 +23,18 @@ There are a few options you can pass in with an object.
 		var options = {
 
 			// where you want uploaded files to land.  Must already exist
-			// default is "/tmp"
-			fsPath: "/tmp",
+			fsPath: "/tmp",	// this is the default
 		
 			// a regular expression used to sanitize filenames before writing
-			// default is /[^-._a-z0-9]+/g;
-			reClean = /[^-._a-z0-9]+/g;
+			reClean = /[^-._a-z0-9]+/g;	// this is the default
 
 		}
 
 		dadu.handleUpload(req, res, options);
 
-And lastly, if you include a callback, this will be called with the full path of
-the uploaded file for you.
+If you include a callback in the options object,
+this will be called with the an error,
+or the full path of the uploaded file.
 
 		dadu.handleUpload(req, res, {
 			cb: function(error, path) {
@@ -47,41 +47,49 @@ the uploaded file for you.
 
 ### Browser
 
-The browser and server both use the exact same dadu.js file.
-The code deduces whether it's running in a node process or not and acts accordingly.
+Include the dadu.js file:
 
-	<html>
-	<body>
-		<div id=drop>Drop a file on me.</div>
-		<script src='dadu.js'></script>
-		<script>
-			var drop = document.getElementById('drop')
-			dadu = new Dadu();
-			dadu.target(drop);
-		</script>
-	</body>
-	</html>
+	<script src='dadu.js'></script>
 
+Create a Dadu object:
 
-The target() function also can take an options object.
+	<script>
+		dadu = new Dadu();
+	</script>
 
-	dadu.target(drop, {
-		sent: function(xfer) {
-			// called when upload is complete 
-			// arg is the xfer that just completed
-			alert('file uploaded ok: ' + o2j(o));
-		},
-		status: function(xfers) {
-			// called every 1/4 second or so with array of xfer objects
-		},
-		enter: function(event) {
-			// called when mouse enters the target element.  
-			// so you can do some sort of highlight effect, for example
-		},
-		leave: function(event) {
-			// called when mouse leaves the target element.  
-		},
-	})
+And then call the target() function with a DOM element:
+
+	<div id=drop>
+		[ Drop a file on me.]
+	</div>
+	<script>
+		dadu.target( document.getElementById('drop') );
+	</script>
+
+At this point, you can now drag and drop files onto the target element
+to upload a file.
+
+The target() function can also take an options object:
+
+	<script>
+		dadu.target(drop, {
+			sent: function(xfer) {
+				// called when upload is complete 
+				// arg is the xfer that just completed
+				alert('file uploaded ok: ' + o2j(o));
+			},
+			status: function(xfers) {
+				// called every 1/4 second or so with array of xfer objects
+			},
+			enter: function(event) {
+				// called when mouse enters the target element.  
+				// so you can do some sort of highlight effect, for example
+			},
+			leave: function(event) {
+				// called when mouse leaves the target element.  
+			},
+		})
+	</script>
 
 
 ## Test
