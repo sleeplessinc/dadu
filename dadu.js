@@ -89,6 +89,7 @@ if((typeof process) !== 'undefined') {
 		// ====================
 		// test mode
 		// ====================
+		var testPort = 4080;
 		require('http').createServer(function(req, res) {
 
 			console.log(req.method + " " + req.url);
@@ -99,9 +100,9 @@ if((typeof process) !== 'undefined') {
 "<div id=drop>Drop a file on me.</div>"+"\n"+
 "<script src='dadu.js'></script>"+"\n"+
 "<script>"+"\n"+
-"	dadu = new Dadu();"+"\n"+
+"	dadu = new Dadu({port:"+testPort+"});"+"\n"+
 "	dadu.target('drop', {"+"\n"+
-"		sent: function(o) { alert('file uploaded ok: ' + o2j(o)); },"+"\n"+
+"		sent: function(xfer) { alert('file uploaded ok: ' + o2j(xfer)); },"+"\n"+
 "	})"+"\n"+
 "</script>"+"\n"+
 "";
@@ -126,8 +127,8 @@ if((typeof process) !== 'undefined') {
 		
 			exports.handleUpload(req, res);
 
-		}).listen(4080);
-		console.log("listening");
+		}).listen(testPort);
+		console.log("listening on "+testPort);
 	}
 
 }
@@ -143,13 +144,12 @@ else {
 
 		opts = opts || {};
 
-		var port = opts.port || 4080;
+		var port = opts.port || 80;
 
 		var xfers = { files: [] }
 
 		self.target = function(target, cbStatus, cbEnter, cbLeave, cbSent) {
 
-			//var xfers = self.xfers
 			var nop = function() {}
 
 
@@ -224,7 +224,6 @@ else {
 		}
 
 		self.tick = function(cbStatus, cbSent) {
-			//var xfers = self.xfers
 			var l = xfers.files.length
 			var r, file, i
 

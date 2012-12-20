@@ -1,16 +1,19 @@
 
 # Drag and Drop Upload
 
+This is an npm module that facilitates drag-and-drop file uploads in a browser.
+For it to work, there has to be both client and server side components.
+Both are included here, and both are contained in the one file, "dadu.js".
+The code detects if it's running in node.js or a browser and behaves accordingly.
+
 ## Install
 
 	$ npm install dadu
 
-There is only one source file  called "dadu.js" which
-handles both the server side and client side components.
-
 ## Examples
 
 ### Server
+
 
 	dadu = require("dadu");
 	require('http').createServer(function(req, res) {
@@ -73,23 +76,35 @@ The target() function can also take an options object:
 
 	<script>
 		dadu.target(drop, {
+
 			sent: function(xfer) {
 				// called when upload is complete 
 				// arg is the xfer that just completed
 				alert('file uploaded ok: ' + o2j(o));
 			},
+
 			status: function(xfers) {
 				// called every 1/4 second or so with array of xfer objects
 			},
+
 			enter: function(event) {
 				// called when mouse enters the target element.  
 				// so you can do some sort of highlight effect, for example
 			},
+
 			leave: function(event) {
 				// called when mouse leaves the target element.  
 			},
 		})
 	</script>
+
+
+Note that the Dadu() function also takes an options argument:
+
+	var dadu = new Dadu({
+		port: 4080		// port to expect server to be listening on - default 80
+	});
+
 
 
 ## Demo
@@ -100,8 +115,7 @@ To demonstrate, run the server in test mode:
 	$ node dadu.js
 
 Then load localhost:4080 in your browser.
-When the server is in testmode it will return a test page that you can
-drop files onto.
+You will get a test page that you can drop files onto.
 
 
 ## License
