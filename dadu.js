@@ -91,42 +91,32 @@ if((typeof process) !== 'undefined') {
 		// ====================
 		var testPort = 4080;
 		require('http').createServer(function(req, res) {
-
 			console.log(req.method + " " + req.url);
-			if(req.url == "/") {
-				var data = ""+
-"<html>"+"\n"+
-"<body>"+"\n"+
-"<div id=drop>Drop a file on me.</div>"+"\n"+
-"<script src='dadu.js'></script>"+"\n"+
-"<script>"+"\n"+
-"	dadu = new Dadu({port:"+testPort+"});"+"\n"+
-"	dadu.target('drop', {"+"\n"+
-"		sent: function(xfer) { alert('file uploaded ok: ' + o2j(xfer)); },"+"\n"+
-"	})"+"\n"+
-"</script>"+"\n"+
-"";
-				res.writeHead(200, {
-					"Content-Type": "text/html",
-					"Content-Length": data.length
-				})
-				res.end(data);
-				return;
-			}
+			var u = require("url").parse(req.url, true)
 
-			if(req.url == "/dadu.js") {
-				require("fs").readFile("dadu.js", function(err, data) {
+			var path = u.pathname.substr(1);
+			if(path == "") {
+				if(u.query.file) {
+					exports.handleUpload(req, res);
+					return;
+				}
+				path = "test.html";
+			}
+			require("fs").readFile(path, function(err, data) {
+				if(err) {
+					res.end("File not found: "+path);
+				}
+				else {
+					var mime = "text/html";
+					if(path.substr(-3) == ".js")
+						mime = "application/javascript";
 					res.writeHead(200, {
-						"Content-Type": "application/javascript",
+						"Content-Type": mime,
 						"Content-Length": data.length
 					})
 					res.end(data);
-				})
-				return;
-			}
-		
-			exports.handleUpload(req, res);
-
+				}
+			})
 		}).listen(testPort);
 		console.log("listening on "+testPort);
 	}
