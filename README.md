@@ -27,6 +27,8 @@ something like this:
 
 	{"type":"image/jpeg","size":11100,"fileName":"273853_1565046558_2703087_n.jpg","error":null,"remoteName":"273853_1565046558_2703087_n.jpg","remoteSize":11100}
 
+This is an "xfer" object and contains data for a single file transfer.
+
 If "error" is not null, then it will be a description of what went wrong.
 Otherwise, the upload succeeded.
 
@@ -103,6 +105,29 @@ The target() function can also take an options object:
 			},
 		})
 	</script>
+
+
+The status function receives an object that looks something like this:
+
+	{
+		"queue":[],		// array of xfer objects waiting to be sent
+		"ok":[],		// array of xfer objects sent successfully
+		"error":[],		// array of xfer objects that experienced an error
+		"current": {	// the xfer object that is currently being uploaded (if any)
+			"fileName":"273853_1565046558_2703087_n.jpg",
+			"size":11100,
+			"type":"image/jpeg"
+						// note that this is same object passed into sent() function, but
+						// hasn't had remoteName and remoteSize added as it's not done yet.
+		},
+		"filesTotal":1,		// num files to send
+		"filesDone":0,		// num sent OK
+		"filesFaild":0,		// num failed
+		"total":11100,		// bytes to send (all files)
+		"soFar":0,			// bytes sent so far (all files)
+		"percent":0,		// 0 - 100, indicating progress
+		"done":false		// true when all files processed and dadu goes idle
+	}
 
 
 Note that the Dadu() constructor function also takes an options argument:
