@@ -86,9 +86,11 @@ if((typeof process) !== 'undefined') {
 
 
 	if(require.main === module) {
-		// ====================
-		// test mode
-		// ====================
+
+		//
+		// test mode!
+		//
+	
 		var testPort = 4080;
 		require('http').createServer(function(req, res) {
 			console.log(req.method + " " + req.url);
@@ -128,127 +130,51 @@ else {
     // browser
 	// ========================
 
-	var Dadu = function(opts) {
-
+	function Dadu(opts) {
 		var self = this;
 
 		opts = opts || {};
 
+		var nop = function(){}
 		var port = opts.port || 80;
-
-		var xfers = { files: [] }
-
-		self.target = function(target, cbStatus, cbEnter, cbLeave, cbSent) {
-
-			var nop = function() {}
+		var xfers = { queue: [], }
 
 
-			if(typeof cbStatus === "object") {
-				var o = cbStatus;
-				cbStatus = o.status || nop();
-				cbEnter = o.enter || nop();
-				cbLeave = o.leave || nop();
-				cbSent = o.sent || nop();
-			}
 
-
-			if(typeof target === "string")
-				target = document.getElementById(target)
-			if(typeof target !== "object")
-				target = document.body
-
-			target.ondragenter = function(event) {
-				event.preventDefault();
-				if(cbEnter)
-					cbEnter(event)
-				return true;
-			}
-
-			target.ondragleave = cbLeave || nop
-
-			target.ondragover = function(event) {
-				event.preventDefault();
-				return true;
-			}
-
-			target.ondrop = function(event) {
-				event.preventDefault();
-
-				(cbLeave || nop)(event)
-
-				var newFiles = event.dataTransfer.files
-				var l = newFiles.length
-				var ticking = true
-				var i, file, tick
-
-				if(xfers.files.length < 1 && !xfers.current) {
-					// nothing in queue or in transit; clear counts and arrays
-					ticking = false
-					xfers.ok = []
-					xfers.error = []
-					xfers.current = null
-					xfers.filesTotal = 0
-					xfers.filesDone = 0
-					xfers.filesFaild = 0
-					xfers.total = 0
-					xfers.soFar = 0
-					xfers.percent = 0
-					xfers.done = false
-				}
-
-				// add new files to queue.  there may already be transfers in progress
-				for(i = 0; i < l; i++) {
-					file = newFiles[i]
-					xfers.files.push(file)
-					xfers.total += file.size
-					xfers.filesTotal++
-					if(file.fileName === undefined) {
-						// latest FF
-						file.fileName = file.name;
-					}
-				}
-
-				if(!ticking)
-					self.tick(cbStatus, cbSent)
-			}
-		}
-
-		self.tick = function(cbStatus, cbSent) {
-			var l = xfers.files.length
-			var r, file, i
+		var tick = function(cbStatus, cbSent) {
 
 			if(!xfers.current) {
 				// nothing currently being sent
 
-				if(l < 1) {
+				if(xfers.queue.length < 1) {
 					// queue drained. make one last status callback with done=true
 					xfers.done = true;
 					xfers.soFar = xfers.total
 					xfers.percent = 100
-					if(cbStatus)
-						cbStatus(xfers)
+					cbStatus(xfers)
 					return	// don't restart timer
 				}
 
 				// get next file from queue
-				file = xfers.files.shift()
+				var file = xfers.queue.shift()
 
-				// make this the current transfer in progress
+				// make it the current transfer in progress
 				xfers.current = file
 
-				// start sending it
+				// start sending
+				var xhr = null;
 				if(typeof ActiveXObject != "undefined") 
-					r = new ActiveXObject("Microsoft.XMLHTTP");
+					xhr = new ActiveXObject("Microsoft.XMLHTTP");
 				else
-					r = new XMLHttpRequest();
+					xhr = new XMLHttpRequest();
 
-				r.upload.addEventListener("progress", function(e) {
+				xhr.upload.addEventListener("progress", function(e) {
 					if(e.lengthComputable)
 						file.loaded = e.loaded 
 				}, false)
 
-				r.onload = function() {
-					var o = j2o(r.responseText) || {error: "Upload failed"};
+				xhr.onload = function() {
+					var o = j2o(xhr.responseText) || {error: "Upload failed"};
 
 					file.ok = true
 					file.remoteName = o.file;
@@ -256,12 +182,10 @@ else {
 					xfers.ok.push(file)
 					xfers.current = null
 					xfers.filesDone++
-					if(cbSent)
-						cbSent(file)
+					cbSent(file)
 				}
 
-				r.upload.addEventListener("error", function(e) {
-					alert('Upload error.');
+				xhr.upload.addEventListener("error", function(e) {
 					file.error = e
 					xfers.error.push(file)
 					xfers.filesFailed++
@@ -269,8 +193,7 @@ else {
 					xfers.filesDone++
 				}, false)
 
-				r.upload.addEventListener("abort", function(e) {
-					alert('Upload aborted.');
+				xhr.upload.addEventListener("abort", function(e) {
 					file.aborted = e
 					xfers.error.push(file)
 					xfers.filesFailed++
@@ -283,18 +206,20 @@ else {
 					document.location.hostname + ":" + port +
 					"/?file=" + encodeURIComponent(file.fileName)
 
-				r.open("POST", url, true);
-				r.setRequestHeader("Content-Type", "text/plain") // required for chrome?
-				r.send(file);
+				xhr.open("POST", url, true);
+				xhr.setRequestHeader("Content-Type", "text/plain") // required for chrome?
+				xhr.send(file);
+
+				// XXX should there be a return here?
 			}
 
 
 			// compute overall progress
 			xfers.soFar = 0
-			for(i = 0; i < xfers.ok.length; i++) {
+			for(var i = 0; i < xfers.ok.length; i++) {
 				xfers.soFar += xfers.ok[i].size
 			}
-			for(i = 0; i < xfers.error.length; i++) {
+			for(var i = 0; i < xfers.error.length; i++) {
 				xfers.soFar += xfers.error[i].size
 			}
 			if(xfers.current) {
@@ -304,66 +229,55 @@ else {
 
 
 			// call back with current status
-			if(cbStatus)
-				cbStatus(xfers)
+			cbStatus(xfers)
 
-			setTimeout(self.tick, 250, cbStatus, cbSent)
+			setTimeout(tick, 250, cbStatus, cbSent)		// again!
 		}
 
-	}
 
-/*
-	var dadu = {
+		self.target = function(elem, cbStatus, cbEnter, cbLeave, cbSent) {
 
-		xfers: { files: [] },
-
-		target: function(target, cbStatus, cbEnter, cbLeave, cbSent, url) {
-
-			var xfers = dadu.xfers
-			var nop = function() {}
-
+			if(!elem)
+				return;
 
 			if(typeof cbStatus === "object") {
 				var o = cbStatus;
-				cbStatus = o.status || nop();
-				cbEnter = o.enter || nop();
-				cbLeave = o.enter || nop();
-				cbSent = o.enter || nop();
+				cbStatus = o.status
+				cbEnter = o.enter
+				cbLeave = o.leave
+				cbSent = o.sent
 			}
 
+			cbStatus = cbStatus || nop;
+			cbEnter = cbEnter || nop;
+			cbLeave = cbLeave || nop;
+			cbSent = cbSent || nop;
 
-			if(typeof target === "string")
-				target = document.getElementById(target)
-			if(typeof target !== "object")
-				target = document.body
 
-			target.ondragenter = function(event) {
-				event.preventDefault();
-				if(cbEnter)
-					cbEnter(event)
+			elem.ondragenter = function(evt) {
+				evt.preventDefault();
+				cbEnter(evt)
 				return true;
 			}
 
-			target.ondragleave = cbLeave || nop
+			elem.ondragleave = cbLeave
 
-			target.ondragover = function(event) {
-				event.preventDefault();
+			elem.ondragover = function(evt) {
+				evt.preventDefault();
 				return true;
 			}
 
-			target.ondrop = function(event) {
-				event.preventDefault();
+			elem.ondrop = function(evt) {
+				evt.preventDefault();
 
-				(cbLeave || nop)(event)
+				cbLeave(evt)
 
-				var newFiles = event.dataTransfer.files
-				var l = newFiles.length
-				var ticking = true
-				var i, file, tick
+				var newFiles = evt.dataTransfer.files
+				var idle = false
 
-				if(xfers.files.length < 1 && !xfers.current) {
+				if(xfers.queue.length < 1 && !xfers.current) {
 					// nothing in queue or in transit; clear counts and arrays
-					ticking = false
+					idle = true
 					xfers.ok = []
 					xfers.error = []
 					xfers.current = null
@@ -377,9 +291,9 @@ else {
 				}
 
 				// add new files to queue.  there may already be transfers in progress
-				for(i = 0; i < l; i++) {
-					file = newFiles[i]
-					xfers.files.push(file)
+				for(var i = 0; i < newFiles.length; i++) {
+					var file = newFiles[i]
+					xfers.queue.push(file)
 					xfers.total += file.size
 					xfers.filesTotal++
 					if(file.fileName === undefined) {
@@ -388,104 +302,11 @@ else {
 					}
 				}
 
-				if(!ticking)
-					dadu.tick(cbStatus, cbSent, url)
+				if(idle)
+					tick(cbStatus, cbSent)
 			}
-		},
-
-		tick: function(cbStatus, cbSent, url) {
-			var loc = document.location
-			var xfers = dadu.xfers
-			var l = xfers.files.length
-			var r, file, i , url
-
-			if(!xfers.current) {
-				// nothing currently being sent
-				if(l < 1) {
-					// queue drained. make one last status callback with done=true
-					xfers.done = true;
-					xfers.soFar = xfers.total
-					xfers.percent = 100
-					if(cbStatus)
-						cbStatus(xfers)
-					return	// return, don't restart timer
-				}
-
-				// get next file from queue
-				file = xfers.files.shift()
-
-				// make this the current transfer in progress
-				xfers.current = file
-
-				// start sending it
-				if(typeof ActiveXObject != "undefined") 
-					r = new ActiveXObject("Microsoft.XMLHTTP");
-				else
-					r = new XMLHttpRequest();
-				r.upload.addEventListener("progress", function(e) {
-					if(e.lengthComputable)
-						file.loaded = e.loaded 
-				}, false)
-				r.onload = function() {
-					var hashName = r.responseText
-
-					file.ok = true
-					file.hashName = JSON.parse(r.responseText).hash
-					xfers.ok.push(file)
-					xfers.current = null
-					xfers.filesDone++
-					if(cbSent)
-						cbSent(file)
-				}
-				r.upload.addEventListener("error", function(e) {
-					alert('error');
-					file.error = e
-					xfers.error.push(file)
-					xfers.filesFailed++
-					xfers.current = null
-					xfers.filesDone++
-				}, false)
-				r.upload.addEventListener("abort", function(e) {
-					alert('abort');
-					file.aborted = e
-					xfers.error.push(file)
-					xfers.filesFailed++
-					xfers.current = null
-					xfers.filesDone++
-				}, false)
-				//if(!url) {
-					url = loc.protocol + "//" + loc.hostname + ":4080"
-				//}
-				url += "/?file="+encodeURIComponent(file.fileName)
-				r.open("POST", url, true);
-				r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
-				r.send(file);
-			}
-
-
-			// compute overall progress
-			xfers.soFar = 0
-			for(i = 0; i < xfers.ok.length; i++) {
-				xfers.soFar += xfers.ok[i].size
-			}
-			for(i = 0; i < xfers.error.length; i++) {
-				xfers.soFar += xfers.error[i].size
-			}
-			if(xfers.current) {
-				xfers.soFar += xfers.current.loaded || 0
-			}
-			xfers.percent = Math.floor((xfers.soFar * 100) / xfers.total)
-
-
-			// call back with current status
-			if(cbStatus)
-				cbStatus(xfers)
-
-			setTimeout(dadu.tick, 250, cbStatus, cbSent, url)
 		}
 
 	}
-	*/
-
 
 }
