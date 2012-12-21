@@ -44,14 +44,15 @@ There are a few options you can pass in with an object.
 		dadu.handleUpload(req, res, options);
 
 If you include a callback in the options object,
-this will be called with the an error,
+this will be called with an error,
 or the full path of the uploaded file.
 
 		dadu.handleUpload(req, res, {
 			cb: function(error, path) {
 				if(error)
-					// something went wrong
-				// path == the filesystem path where uploaded file was stored
+					console.log("ERROR: "+error);
+				else
+					// path == the filesystem path where uploaded file was stored
 			}
 		});
 
