@@ -24,7 +24,7 @@ given the typical request and response objects.
 
 The handler will reply to the HTTP client with a JSON formatted "xfer" object (see below).
 
-There are a few options you can pass in with an object.
+There are a few options you can pass in to the handler:
 
 		var options = {
 			// where you want uploaded files to land.  Must already exist
@@ -35,8 +35,7 @@ There are a few options you can pass in with an object.
 		dadu.handleUpload(req, res, options);
 
 If you include a callback in the options object,
-this will be called with an error,
-or the full path of the uploaded file.
+it will be called when the xfer is finished:
 
 		dadu.handleUpload(req, res, {
 			cb: function(error, path) {
