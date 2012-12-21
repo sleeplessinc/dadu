@@ -9,7 +9,7 @@
 	var log = document.getElementById('log');
 	dadu.target(elem, {
 		sent: function(xfer) {
-			alert('file uploaded ok: ' + o2j(xfer));
+			log.innerHTML = "SENT: "+o2j(xfer) + "\n" + log.innerHTML;
 		},
 		enter: function() {
 			elem.style.opacity = 0.5
@@ -18,7 +18,7 @@
 			elem.style.opacity = 1.0
 		},
 		status: function(xfers) {
-			log.innerHTML = o2j(xfers) + "\n" + log.innerHTML;
+			log.innerHTML = "STATUS: "+o2j(xfers) + "\n" + log.innerHTML;
 		},
 	})
 </script>

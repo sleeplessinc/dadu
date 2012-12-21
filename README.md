@@ -1,7 +1,7 @@
 
 # Drag and Drop Upload
 
-This is an npm module that facilitates drag-and-drop file uploads in a browser.
+This code facilitates drag-and-drop file uploads in a browser.
 For it to work, there has to be both client and server side components.
 Both are included here, and both are contained in the one file, "dadu.js".
 The code detects if it's running in node.js or a browser and behaves accordingly.
@@ -14,12 +14,24 @@ The code detects if it's running in node.js or a browser and behaves accordingly
 
 ### Server
 
+For servers, a single function call is provided that handles an http request
+given the typical request and response objects.
 
 	dadu = require("dadu");
 	require('http').createServer(function(req, res) {
 		dadu.handleUpload(req, res);
 	}).listen(4080);
 
+The handler will reply to the HTTP client with a JSON formatted reply,
+something like this:
+
+	{"type":"image/jpeg","size":11100,"fileName":"273853_1565046558_2703087_n.jpg","error":null,"remoteName":"273853_1565046558_2703087_n.jpg","remoteSize":11100}
+
+If "error" is not null, then it will be a description of what went wrong.
+Otherwise, the upload succeeded.
+
+The remoteName is the name on the server side that the file was given and may differ
+from the name of the file actually dropped into the browser.
 
 There are a few options you can pass in with an object.
 

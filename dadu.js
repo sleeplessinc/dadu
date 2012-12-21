@@ -176,7 +176,7 @@ else {
 				xhr.onload = function() {
 					var o = j2o(xhr.responseText) || {error: "Upload failed"};
 
-					file.ok = true
+					file.error = o.error
 					file.remoteName = o.file;
 					file.remoteSize = o.size;
 					xfers.ok.push(file)
