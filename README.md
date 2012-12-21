@@ -22,18 +22,7 @@ given the typical request and response objects.
 		dadu.handleUpload(req, res);
 	}).listen(4080);
 
-The handler will reply to the HTTP client with a JSON formatted reply,
-something like this:
-
-	{"type":"image/jpeg","size":11100,"fileName":"273853_1565046558_2703087_n.jpg","error":null,"remoteName":"273853_1565046558_2703087_n.jpg","remoteSize":11100}
-
-This is an "xfer" object and contains data for a single file transfer.
-
-If "error" is not null, then it will be a description of what went wrong.
-Otherwise, the upload succeeded.
-
-The remoteName is the name on the server side that the file was given and may differ
-from the name of the file actually dropped into the browser.
+The handler will reply to the HTTP client with a JSON formatted "xfer" object (see below).
 
 There are a few options you can pass in with an object.
 
@@ -87,27 +76,32 @@ The target() function can also take an options object:
 
 	<script>
 		dadu.target(drop, {
-
-			sent: function(xfer) {
-				// called when upload is complete 
-			},
-
-			status: function(xfers) {
-				// called every 1/4 second or so with array of xfer objects
-			},
-
-			enter: function(event) {
-				// called when mouse enters the target element.  
-			},
-
-			leave: function(event) {
-				// called when mouse leaves the target element.  
-			},
+			sent: function(xfer) { },	// called when upload is complete 
+			status: function(info) { },	// called every 1/4 second or so 
+			enter: function(event) { },	// called when mouse enters the target element.  
+			leave: function(event) { },	// called when mouse leaves the target element.  
 		})
 	</script>
 
 
-The status function receives an object that looks something like this:
+The sent() function receives an "xfer" object, which looks something like this:
+
+	{
+		"error":null,
+		"fileName":"273853_1565046558_2703087_n.jpg",
+		"size":11100,
+		"type":"image/jpeg",
+		"remoteName":"273853_1565046558_2703087_n.jpg",
+		"remoteSize":11100
+	}
+
+The remoteName is the filesystem name given to the uploaded file on the server side.
+It may differ from the name of the file actually dropped into the browser.
+
+If "error" is not null, then it will be a description of what went wrong.
+Otherwise, the upload succeeded.
+
+The status() function receives an object that looks something like this:
 
 	{
 		"queue":[],		// array of xfer objects waiting to be sent
