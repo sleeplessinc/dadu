@@ -36,15 +36,11 @@ from the name of the file actually dropped into the browser.
 There are a few options you can pass in with an object.
 
 		var options = {
-
 			// where you want uploaded files to land.  Must already exist
 			fsPath: "/tmp",	// this is the default
-		
 			// a regular expression used to sanitize filenames before writing
 			reClean = /[^-._a-z0-9]+/g;	// this is the default
-
 		}
-
 		dadu.handleUpload(req, res, options);
 
 If you include a callback in the options object,
