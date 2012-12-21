@@ -88,8 +88,6 @@ The target() function can also take an options object:
 
 			sent: function(xfer) {
 				// called when upload is complete 
-				// arg is the xfer that just completed
-				alert('file uploaded ok: ' + o2j(o));
 			},
 
 			status: function(xfers) {
@@ -98,7 +96,6 @@ The target() function can also take an options object:
 
 			enter: function(event) {
 				// called when mouse enters the target element.  
-				// so you can do some sort of highlight effect, for example
 			},
 
 			leave: function(event) {
@@ -108,7 +105,7 @@ The target() function can also take an options object:
 	</script>
 
 
-Note that the Dadu() function also takes an options argument:
+Note that the Dadu() constructor function also takes an options argument:
 
 	var dadu = new Dadu({
 		port: 4080		// port to expect server to be listening on - default 80
@@ -125,6 +122,7 @@ To demonstrate, run the server in test mode:
 
 Then load localhost:4080 in your browser.
 You will get a test page that you can drop files onto.
+They will be uploaded and land in "/tmp".
 
 
 ## License
