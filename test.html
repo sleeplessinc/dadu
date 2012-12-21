@@ -1,0 +1,25 @@
+<html>
+<body>
+<div id=drop> [ DROP A FILE ON ME ] </div>
+<pre id=log></pre>
+<script src='dadu.js'></script>
+<script>
+	dadu = new Dadu({port:4080});
+	var elem = document.getElementById('drop');
+	var log = document.getElementById('log');
+	dadu.target(elem, {
+		sent: function(xfer) {
+			alert('file uploaded ok: ' + o2j(xfer));
+		},
+		enter: function() {
+			elem.style.opacity = 0.5
+		},
+		leave: function() {
+			elem.style.opacity = 1.0
+		},
+		status: function(xfers) {
+			log.innerHTML = o2j(xfers) + "\n" + log.innerHTML;
+		},
+	})
+</script>
+
