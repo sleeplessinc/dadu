@@ -48,7 +48,7 @@ And then call the target() function within the object with a DOM element:
 At this point, you can now drag and drop files onto the target element
 to upload a file.
 
-When a file is successfully uploade, 
+When a file is successfully uploaded, 
 the "cbSent" function receives an object, that looks something like this:
 
 	{
@@ -60,7 +60,8 @@ the "cbSent" function receives an object, that looks something like this:
 		"remoteSize":11100
 	}
 
-The uploaded file will be found at "/tmp/a7ac539356be4e5f8a74e5f8a72e08b_foo.jpg"
+The uploaded file will be found at
+"/tmp/a7ac539356be4e5f8a74e5f8a72e08b_foo.jpg"
 on the server.
 Note that remoteName will differ from the name of the file dropped into the browser.
 
@@ -70,9 +71,18 @@ Otherwise, the upload succeeded.
 
 ## Your Component
 
-When this "sent" message is received, it's now up to you to deal with it somehow,
-and to do so within 60 seconds, because the uploaded copy in "/tmp" is deleted after
-that much time.
+When th "cbSent" function is called with no error, it's now up to you to deal with
+it somehow, and you have to do so within 60 seconds. After that time, the uploaded
+copy in "/tmp" is deleted.
+
+One option is to for the browser to perform a XHR/Ajax call to a PHP script,
+supplying it the "remoteName".  The PHP script can then copy the file from the
+"/tmp" dir to its final location.
+
+Another option is for the dadu server to be instantiated manually and given a callback
+function.  That callback function can then do something with the uploaded file.
+See the "Server: Advanced" section below.
+
 
 
 ## Demo
