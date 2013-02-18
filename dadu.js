@@ -20,121 +20,195 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE. 
 */
+	
+var j2o = function(j) { try { return JSON.parse(j) } catch(e) { return null } }
+var o2j = function(o) { return JSON.stringify(o) }
 
 
-var dadu = {
+if((typeof process) !== 'undefined') {
 
-	xfers: { files: [] },
+    // node.js
 
-	target: function(target, cbStatus, cbEnter, cbLeave, cbSent, url) {
-		var xfers = dadu.xfers
-		var nop = function() {}
+	exports.handleUpload = function(req, res, opts) {
 
-		if(typeof target === "string")
-			target = document.getElementById(target)
-		if(typeof target !== "object")
-			target = document.body
+		opts = opts || {};
+		var fsPath = opts.fsPath || "/tmp";
+		var reClean = opts.reClean || /[^-._a-z0-9]+/g;
 
-		target.ondragenter = function(event) {
-			event.preventDefault();
-			if(cbEnter)
-				cbEnter(event)
-			return true;
-		}
+		var cb = function(err, o) {
+			o = o || {};
+				o.error = err;
+			var j = o2j(o);
+			res.writeHead(200, {
+				//"Access-Control-Allow-Origin": "*",
+				"Access-Control-Max-Age": "0",
+				"Content-Type": "application/json",
+				"Content-Length": j.length
+			})
+			res.end(j)
 
-		target.ondragleave = cbLeave || nop
-
-		target.ondragover = function(event) {
-			event.preventDefault();
-			return true;
-		}
-
-		target.ondrop = function(event) {
-			event.preventDefault();
-
-			(cbLeave || nop)(event)
-
-			var newFiles = event.dataTransfer.files
-			var l = newFiles.length
-			var ticking = true
-			var i, file, tick
-
-			if(xfers.files.length < 1 && !xfers.current) {
-				// nothing in queue or in transit; clear counts and arrays
-				ticking = false
-				xfers.ok = []
-				xfers.error = []
-				xfers.current = null
-				xfers.filesTotal = 0
-				xfers.filesDone = 0
-				xfers.filesFaild = 0
-				xfers.total = 0
-				xfers.sofar = 0
-				xfers.percent = 0
-				xfers.done = false
+			// XXX callback to 
+			if(opts.cb) {
+				opts.cb(err, path);
 			}
+		}
 
-			// add new files to queue.  there may already be transfers in progress
-			for(i = 0; i < l; i++) {
-				file = newFiles[i]
-				xfers.files.push(file)
-				xfers.total += file.size
-				xfers.filesTotal++
-				if(file.fileName === undefined) {
-					// latest FF
-					file.fileName = file.name;
+		var u = require("url").parse(req.url, true)
+		var query = u.query
+
+		var file = query.file || "";
+		file = file.toLowerCase().replace(reClean, "_")
+		if(!file)
+			return cb("No file");
+		if(file.match("/\.\./"))
+			return cb("Naughty file name: "+file);
+
+		var path = fsPath + "/" + file;
+
+
+		var ws = require("fs").createWriteStream(path)
+
+		req.soFar = 0;
+
+		req.addListener("data", function(d) {
+			req.soFar += d.length;
+			ws.write(d, "binary")
+		})
+		
+		req.addListener("end", function() {
+			ws.end() 
+			cb(null, { file: file, size: req.soFar });
+		})
+
+	}
+
+
+	if(require.main === module) {
+
+		//
+		// test mode!
+		//
+	
+		var testPort = 4080;
+		require('http').createServer(function(req, res) {
+			console.log(req.method + " " + req.url);
+			var u = require("url").parse(req.url, true)
+
+			var path = u.pathname.substr(1);
+			if(path == "") {
+				if(u.query.file) {
+					exports.handleUpload(req, res);
+					return;
 				}
+				path = "test.html";
 			}
+			require("fs").readFile(path, function(err, data) {
+				if(err) {
+					res.end("File not found: "+path);
+				}
+				else {
+					var mime = "text/html";
+					if(path.substr(-3) == ".js")
+						mime = "application/javascript";
+					res.writeHead(200, {
+						"Content-Type": mime,
+						"Content-Length": data.length
+					})
+					res.end(data);
+				}
+			})
+		}).listen(testPort);
+		console.log("listening on "+testPort);
+	}
 
-			if(!ticking)
-				dadu.tick(cbStatus, cbSent, url)
-		}
-	},
+}
+else {
 
-	tick: function(cbStatus, cbSent, url) {
-		var loc = document.location
-		var xfers = dadu.xfers
-		var l = xfers.files.length
-		var r, file, i , url
+    // browser
 
-		if(!xfers.current) {
-			// nothing currently being sent
-			if(l < 1) {
-				// queue drained. make one last status callback with done=true
-				xfers.done = true;
-				xfers.sofar = xfers.total
-				xfers.percent = 100
-				if(cbStatus)
+	function Dadu(opts) {
+		var self = this;
+
+		opts = opts || {};
+
+		var nop = function(){}
+		var port = opts.port || 80;
+		var xfers = { queue: [], }
+
+
+
+		var tick = function(cbStatus, cbSent) {
+
+			if(!xfers.current) {
+				// nothing currently being sent
+
+				if(xfers.queue.length < 1) {
+					// queue drained. make one last status callback with done=true
+					xfers.done = true;
+					xfers.soFar = xfers.total
+					xfers.percent = 100
 					cbStatus(xfers)
-				return	// return, don't restart timer
-			}
+					return	// don't restart timer
+				}
 
-			// get next file from queue
-			file = xfers.files.shift()
+				// get next file from queue
+				var file = xfers.queue.shift()
 
-			// make this the current transfer in progress
-			xfers.current = file
+				// make it the current transfer in progress
+				xfers.current = file
 
-			// start sending it
-			if(typeof ActiveXObject != "undefined") 
-				r = new ActiveXObject("Microsoft.XMLHTTP");
-			else
-				r = new XMLHttpRequest();
-			r.upload.addEventListener("progress", function(e) {
-				if(e.lengthComputable)
-					file.loaded = e.loaded 
-			}, false)
-			r.onload = function() {
-				var hashName = r.responseText
+				// start sending
+				var xhr = null;
+				if(typeof ActiveXObject != "undefined") 
+					xhr = new ActiveXObject("Microsoft.XMLHTTP");
+				else
+					xhr = new XMLHttpRequest();
 
-				file.ok = true
-				file.hashName = JSON.parse(r.responseText).hash
-				xfers.ok.push(file)
-				xfers.current = null
-				xfers.filesDone++
-				if(cbSent)
+				xhr.upload.addEventListener("progress", function(e) {
+					if(e.lengthComputable)
+						file.loaded = e.loaded 
+				}, false)
+
+				xhr.onload = function() {
+					var o = j2o(xhr.responseText) || {error: "Upload failed"};
+
+					file.error = o.error
+					file.remoteName = o.file;
+					file.remoteSize = o.size;
+					xfers.ok.push(file)
+					xfers.current = null
+					xfers.filesDone++
 					cbSent(file)
+				}
+
+				xhr.upload.addEventListener("error", function(e) {
+					file.error = e
+					xfers.error.push(file)
+					xfers.filesFailed++
+					xfers.current = null
+					xfers.filesDone++
+				}, false)
+
+				xhr.upload.addEventListener("abort", function(e) {
+					file.aborted = e
+					xfers.error.push(file)
+					xfers.filesFailed++
+					xfers.current = null
+					xfers.filesDone++
+				}, false)
+
+				var url =
+					document.location.protocol + "//" +
+					document.location.hostname + ":" + port +
+					"/?file=" + encodeURIComponent(file.fileName)
+
+				xhr.open("POST", url, true);
+				xhr.setRequestHeader("Content-Type", "text/plain") // required for chrome?
+				xhr.send(file);
+
+				// XXX should there be a return here?
 			}
+
 			r.upload.addEventListener("error", function(e) {
 				alert('error');
 				file.error = e
@@ -161,27 +235,99 @@ var dadu = {
 		}
 
 
-		// compute overall progress
-		xfers.sofar = 0
-		for(i = 0; i < xfers.ok.length; i++) {
-			xfers.sofar += xfers.ok[i].size
-		}
-		for(i = 0; i < xfers.error.length; i++) {
-			xfers.sofar += xfers.error[i].size
-		}
-		if(xfers.current) {
-			xfers.sofar += xfers.current.loaded || 0
-		}
-		xfers.percent = Math.floor((xfers.sofar * 100) / xfers.total)
+			// compute overall progress
+			xfers.soFar = 0
+			for(var i = 0; i < xfers.ok.length; i++) {
+				xfers.soFar += xfers.ok[i].size
+			}
+			for(var i = 0; i < xfers.error.length; i++) {
+				xfers.soFar += xfers.error[i].size
+			}
+			if(xfers.current) {
+				xfers.soFar += xfers.current.loaded || 0
+			}
+			xfers.percent = Math.floor((xfers.soFar * 100) / xfers.total)
 
 
-		// call back with current status
-		if(cbStatus)
+			// call back with current status
 			cbStatus(xfers)
 
-		setTimeout(dadu.tick, 250, cbStatus, cbSent, url)
+			setTimeout(tick, 250, cbStatus, cbSent)		// again!
+		}
+
+
+		self.target = function(elem, cbStatus, cbEnter, cbLeave, cbSent) {
+
+			if(!elem)
+				return;
+
+			if(typeof cbStatus === "object") {
+				var o = cbStatus;
+				cbStatus = o.status
+				cbEnter = o.enter
+				cbLeave = o.leave
+				cbSent = o.sent
+			}
+
+			cbStatus = cbStatus || nop;
+			cbEnter = cbEnter || nop;
+			cbLeave = cbLeave || nop;
+			cbSent = cbSent || nop;
+
+
+			elem.ondragenter = function(evt) {
+				evt.preventDefault();
+				cbEnter(evt)
+				return true;
+			}
+
+			elem.ondragleave = cbLeave
+
+			elem.ondragover = function(evt) {
+				evt.preventDefault();
+				return true;
+			}
+
+			elem.ondrop = function(evt) {
+				evt.preventDefault();
+
+				cbLeave(evt)
+
+				var newFiles = evt.dataTransfer.files
+				var idle = false
+
+				if(xfers.queue.length < 1 && !xfers.current) {
+					// nothing in queue or in transit; clear counts and arrays
+					idle = true
+					xfers.ok = []
+					xfers.error = []
+					xfers.current = null
+					xfers.filesTotal = 0
+					xfers.filesDone = 0
+					xfers.filesFaild = 0
+					xfers.total = 0
+					xfers.soFar = 0
+					xfers.percent = 0
+					xfers.done = false
+				}
+
+				// add new files to queue.  there may already be transfers in progress
+				for(var i = 0; i < newFiles.length; i++) {
+					var file = newFiles[i]
+					xfers.queue.push(file)
+					xfers.total += file.size
+					xfers.filesTotal++
+					if(file.fileName === undefined) {
+						// latest FF
+						file.fileName = file.name;
+					}
+				}
+
+				if(idle)
+					tick(cbStatus, cbSent)
+			}
+		}
+
 	}
 
 }
-
-
