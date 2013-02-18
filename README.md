@@ -14,7 +14,7 @@ There is a server component and a client (browser code) component.
 	$ node dadu.js
 
 
-### Browser
+## Browser
 
 
 First create a Dadu object:

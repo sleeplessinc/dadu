@@ -15,7 +15,7 @@
 
 <div id=dadu_drop_target class=dadu></div>
 
-<script src="http://sleepless.com:4080/dadu.js"></script>
+<script src="http://yourserver.com:4080/dadu.js"></script>
 <script>
 
 	function dbg(s) {
@@ -45,6 +45,14 @@
 		setTimeout( function() {
 			target.innerHTML = dropMsg;
 		}, 3000 );
+
+		// ------------------
+		// Here, you should send a msg to your server through another channel
+		// with the remoteName, for example, another node server, or a php script, etc.
+		// That would then copy the file from "/tmp/"+remoteName to it's final
+		// location.
+		// ------------------
+
 	})
 
 </script>
