@@ -22,6 +22,35 @@ The server listens on port 4080 and speaks HTTP.  It performs two jobs:
 When the server receives a file, it is renamed to something unique, and stored in
 "/tmp" on the server.
 
+Note that the server can also be instantiated manually by using dadu.js as a
+node.js module:
+
+	var dadu = require( "dadu" );
+	var server = dadu.createServer().listen( my_port );
+
+If you use a port other than 4080 here, you must ensure the browser code is doing so
+as well.
+
+There are some options you can include as well, shown here with what are used
+as defaults if not provided:
+
+	var dadu = require( "dadu" );
+	var server = dadu.createServer({
+		seq: 0,				// incremented before each upload; participates in SHA1 hashing
+		rmSecs: 15,			// seconds after upload that temp files are deleted
+		tmpDir: "/tmp",		// file system dir where uploaded files land
+		reClean: /[^-._a-z0-9]+/g,		// used to clean up the names of uploaded files
+		cleanRep: "_",		// chars matching reClean in filename are replaced with this
+		cbUpload: null,		// called when a file is successfully uploaded:
+	}).listen( my_port );
+
+
+The cbUpload callback will receive 2 args:
+
+	- error: null if no error, else string describing error
+	- info: an object somehing like: { file: "somefilename", size: 12345 });
+
+
 
 ## Browser
 

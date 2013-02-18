@@ -50,7 +50,7 @@ if((typeof process) !== 'undefined') {
 		rmSecs: 15,
 		tmpDir: "/tmp",
 		reClean: /[^-._a-z0-9]+/g,
-		cleanRep: /[^-._a-z0-9]+/g,
+		cleanRep: "_",
 		cbUpload: null,
 	};
 
