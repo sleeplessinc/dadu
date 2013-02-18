@@ -133,14 +133,16 @@ var download = function(req, res) {
 	var hash = query.hash;
 	log(3, "download "+file+", "+hash)
 
+/*
     var extension = file.split('.').pop(),
     var contentType = paperboy.contentTypes[extension] || 'application/octet-stream',
     headerFields['Content-Type'] = contentType;
 
-    // res.writeHead(200, headerFields);
+    res.writeHead(200, headerFields);
 
-	// xxx unfinished
+	xxx unfinished
 
+*/
 	res.end();
 
 }
