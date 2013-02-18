@@ -16,8 +16,8 @@ that you have to supply yourself.
 
 The server listens on port 4080 and speaks HTTP.  It performs two jobs:
 
-	1. It serves up its own dadu.js file (GET /dadu.js) for use in HTML script tags.
-	2. It receives uploads (POST /?file=filename) sent by that browser code
+1. It serves up its own dadu.js file (GET /dadu.js) for use in HTML script tags.
+2. It receives uploads (POST /?file=filename) sent by that browser code
 
 When the server receives a file, it is renamed to something unique, and stored in
 "/tmp" on the server.
@@ -47,8 +47,8 @@ as defaults if not provided:
 
 The cbUpload callback will receive 2 args:
 
-	- error: null if no error, else string describing error
-	- info: an object somehing like: { file: "somefilename", size: 12345 });
+- error: null if no error, else string describing error
+- info: an object somehing like: { file: "somefilename", size: 12345 });
 
 
 
