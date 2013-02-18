@@ -45,7 +45,7 @@ if((typeof process) !== 'undefined') {
 				o.error = err;
 			var j = o2j(o);
 			res.writeHead(200, {
-				//"Access-Control-Allow-Origin": "*",
+				"Access-Control-Allow-Origin": "*",
 				"Access-Control-Max-Age": "0",
 				"Content-Type": "application/json",
 				"Content-Length": j.length
@@ -56,6 +56,10 @@ if((typeof process) !== 'undefined') {
 			if(opts.cb) {
 				opts.cb(err, path);
 			}
+		}
+
+		if( req.method !== "POST" ) {
+			return cb( "Unsupported method" );
 		}
 
 		var u = require("url").parse(req.url, true)
