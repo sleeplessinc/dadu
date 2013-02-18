@@ -29,7 +29,7 @@
 	var target = document.getElementById('dadu_drop_target')
 	target.innerHTML = dropMsg;
 	
-	var dadu = new Dadu("http://yourserver.com:4080");
+	var dadu = new Dadu();
 	dadu.target( target, function(xfers) {
 		// status
 		target.innerHTML = xfers.percent+"% ";

@@ -1,9 +1,10 @@
 
 # Drag and Drop Upload 
 
-This code module facilitates drag-and-drop file uploads in a web page.
+This module facilitates drag-and-drop file uploads in a web page.
 
-There is a server component and a client (browser code) component.
+There is a server component, a client (browser code) component, and a component
+that you have to supply yourself.
 
 ## Install
 
@@ -13,15 +14,22 @@ There is a server component and a client (browser code) component.
 
 	$ node dadu.js
 
+The server listens on port 4080 and speaks HTTP.  It performs two jobs:
+
+	1. It serves up its own dadu.js file (GET /dadu.js) for use in HTML script tags.
+	2. It receives uploads (POST /?file=filename) sent by that browser code
+
+When the server receives a file, it is renamed to something unique, and stored in
+"/tmp" on the server.
+
 
 ## Browser
 
-
-First create a Dadu object:
+In your web page, first create a Dadu object:
 
 	<script src='dadu.js'></script>
 	<script>
-		var dadu = new Dadu("http://yourserver.com:4080");
+		var dadu = new Dadu()
 	</script>
 
 And then call the target() function within the object with a DOM element:
