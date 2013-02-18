@@ -126,6 +126,24 @@ var del = function(req, res) {
 	})
 }
 
+var download = function(req, res) {
+	var u = url.parse(req.url, true)
+	var query = u.query
+	var file = query.file
+	var hash = query.hash;
+	log(3, "download "+file+", "+hash)
+
+    var extension = file.split('.').pop(),
+    var contentType = paperboy.contentTypes[extension] || 'application/octet-stream',
+    headerFields['Content-Type'] = contentType;
+
+    // res.writeHead(200, headerFields);
+
+	// xxx unfinished
+
+	res.end();
+
+}
 
 
 x.log = log	
@@ -155,6 +173,8 @@ x.Dadu = function(opts) {
 			return www(req, res, path.dirname(module.filename))
 		//if(u == "/dir")
 		//	return dir(req, res)
+		if(/^\/download\/?\?/.test(u))
+			return download(req, res)
 		if(/^\/delete\/?\?/.test(u))
 			return del(req, res)
 		if(test) {
