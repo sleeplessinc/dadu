@@ -33,8 +33,11 @@ if((typeof process) !== 'undefined') {
 
 	exports.handleUpload = function(req, res, opts) {
 
+		var crypto = require("crypto")
+		var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
+
 		opts = opts || {};
-		var fsPath = opts.fsPath || "/tmp";
+		var fsPath = opts.fsPath || "./data";
 		var reClean = opts.reClean || /[^-._a-z0-9]+/g;
 
 		var cb = function(err, o) {
@@ -66,10 +69,10 @@ if((typeof process) !== 'undefined') {
 			return cb("Naughty file name: "+file);
 
 		seq += 1;
-		var ext = file.extname(file)
-		var hash = ( sha1( file + ((new Date()).getTime()) + seq ) + ext ).toLowerCase();
+		var ext = require("path").extname(file)
+		var hash = ( sha1( file + ((new Date()).getTime()) + seq ) ).toLowerCase();
 
-		var file = file + "_" + hash;
+		var file = hash + "_" + file;
 
 
 		var path = fsPath + "/" + file;
@@ -109,7 +112,7 @@ if((typeof process) !== 'undefined') {
 					exports.handleUpload(req, res);
 					return;
 				}
-				path = "test.html";
+				path = "index.html";
 			}
 			require("fs").readFile(path, function(err, data) {
 				if(err) {
@@ -135,15 +138,17 @@ else {
 
     // browser
 
-	function Dadu(opts) {
+	function Dadu( server ) {
+
 		var self = this;
 
-		opts = opts || {};
+		if( ! server ) {
+			var loc = document.location;
+			server = loc.protocol + "//" + loc.hostname + ":4080"
+		}
 
 		var nop = function(){}
-		var port = opts.port || 80;
 		var xfers = { queue: [], }
-
 
 
 		var tick = function(cbStatus, cbSent) {
@@ -206,10 +211,7 @@ else {
 					xfers.filesDone++
 				}, false)
 
-				var url =
-					document.location.protocol + "//" +
-					document.location.hostname + ":" + port +
-					"/?file=" + encodeURIComponent(file.fileName)
+				var url = server + "/?file=" + encodeURIComponent(file.fileName)
 
 				xhr.open("POST", url, true);
 				xhr.setRequestHeader("Content-Type", "text/plain") // required for chrome?

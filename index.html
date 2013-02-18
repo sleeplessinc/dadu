@@ -24,12 +24,12 @@
 		}
 	}
 
-	var target = document.getElementById('dadu_drop_target')
-	
 	var dropMsg = "[ DROP FILES HERE TO UPLOAD ]";
 
+	var target = document.getElementById('dadu_drop_target')
 	target.innerHTML = dropMsg;
-
+	
+	var dadu = new Dadu("http://sleepless.com:4080");
 	dadu.target( target, function(xfers) {
 		// status
 		target.innerHTML = xfers.percent+"% ";
@@ -45,7 +45,7 @@
 		setTimeout( function() {
 			target.innerHTML = dropMsg;
 		}, 3000 );
-	}, "http://sleepless.com:4080" )
+	})
 
 </script>
 
