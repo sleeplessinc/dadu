@@ -6,6 +6,11 @@ This module facilitates drag-and-drop file uploads in a web page.
 There is a server component, a client (browser code) component, and a component
 that you have to supply yourself.
 
+Multiple files can be dropped at once, and files additional files can be dropped
+while others are being transferred.  Dragging and dropping directories/folders
+is not supported.
+
+
 ## Install
 
 	$ npm install dadu
