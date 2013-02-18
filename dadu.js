@@ -27,7 +27,9 @@ var o2j = function(o) { return JSON.stringify(o) }
 
 if((typeof process) !== 'undefined') {
 
-    // node.js
+	// --------------------
+    // server code
+	// --------------------
 
 	var seq = 0;
 
@@ -37,7 +39,8 @@ if((typeof process) !== 'undefined') {
 		var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
 
 		opts = opts || {};
-		var fsPath = opts.fsPath || "./data";
+		//var fsPath = opts.fsPath || "./data";
+		var fsPath = opts.fsPath || "/tmp";
 		var reClean = opts.reClean || /[^-._a-z0-9]+/g;
 
 		var cb = function(err, o) {
@@ -140,7 +143,9 @@ if((typeof process) !== 'undefined') {
 }
 else {
 
-    // browser
+	// --------------------
+    // browser code
+	// --------------------
 
 	function Dadu( server ) {
 
