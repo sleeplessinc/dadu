@@ -96,7 +96,12 @@ if((typeof process) !== 'undefined') {
 		
 		req.addListener("end", function() {
 			ws.end() 
+			require("fs").chmodSync( path, 0444 );
+			console.log("file uploaded: "+path);
 			cb(null, { file: file, size: req.soFar });
+			setTimeout( function() {
+				require("fs").unlink( path );
+			}, 15 * 1000 ); // you have this long to do something with it!
 		})
 
 	}
