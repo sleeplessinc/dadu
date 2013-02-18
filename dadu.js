@@ -47,7 +47,7 @@ if((typeof process) !== 'undefined') {
 
 	var optsDefault = {
 		seq: 0,
-		rmSecs: 15,
+		rmSecs: 60,
 		tmpDir: "/tmp",
 		reClean: /[^-._a-z0-9]+/g,
 		cleanRep: "_",
