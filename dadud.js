@@ -36,6 +36,8 @@ var findit = require("findit")
 var crypto = require("crypto")
 var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
 
+var seq = 0;
+
 var nop = function(){}
 
 var fail = function(res, why) {
@@ -73,6 +75,7 @@ var www = function(req, res, root) {
 }
 
 
+/*
 var dir = function(req, res) {
 	var f =  findit.find("./data")
 	var first = true
@@ -105,6 +108,7 @@ var dir = function(req, res) {
 		res.end("]")
 	});
 }
+*/
 
 var del = function(req, res) {
 	var u = url.parse(req.url, true)
@@ -113,7 +117,12 @@ var del = function(req, res) {
 	log(3, "delete "+file)
 
 	fs.unlink("data/"+file, function(e) {
-		res.end(e || "ok")
+		if( e ) {
+			res.end( "error" )
+		}
+		else {
+			res.end("ok")
+		}
 	})
 }
 
@@ -142,11 +151,11 @@ x.Dadu = function(opts) {
 
 	self.get = function(req, res) {
 		var u = req.url
-		if(u == "/dadu.js")
+		if(u === "/dadu.js")
 			return www(req, res, path.dirname(module.filename))
-		if(u == "/dir")
-			return dir(req, res)
-		if(/^\/delete\?/.test(u))
+		//if(u == "/dir")
+		//	return dir(req, res)
+		if(/^\/delete\/?\?/.test(u))
 			return del(req, res)
 		if(test) {
 			if(u == "/")
@@ -190,7 +199,10 @@ x.Dadu = function(opts) {
 		fs.mkdir(fpath, 0777, function(e) {
 			
 			//var hash = sha1(file + Date()) + path.extname(file).toLowerCase()
-			var hash = file.toLowerCase().replace(/[^-._a-z0-9]+/g, "_");
+			//var hash = file.toLowerCase().replace(/[^-._a-z0-9]+/g, "_");
+			seq += 1;
+			var ext = path.extname(file)
+			var hash = ( sha1( file + ((new Date()).getTime()) + seq ) + ext ).toLowerCase();
 
 			if(!e)
 				log(3, fpath+" created")

@@ -151,9 +151,9 @@ var dadu = {
 				xfers.current = null
 				xfers.filesDone++
 			}, false)
-			//if(!url) {
+			if(!url) {
 				url = loc.protocol + "//" + loc.hostname + ":4080"
-			//}
+			}
 			url += "/?file="+encodeURIComponent(file.fileName)
 			r.open("POST", url, true);
 			r.setRequestHeader("Content-Type", "text/plain") // required for chrome - go figure
