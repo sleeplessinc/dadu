@@ -31,118 +31,157 @@ if((typeof process) !== 'undefined') {
     // server code
 	// --------------------
 
-	var seq = 0;
+	var fs = require("fs")
+	var path = require("path")
+	var http = require("http")
+	var url = require("url")
+	var crypto = require("crypto")
+	var log = console.log;
 
-	exports.handleUpload = function(req, res, opts) {
-
-		var crypto = require("crypto")
-		var sha1 = function(s) {var h=crypto.createHash("sha1");h.update(s);return h.digest("hex")}
-
-		opts = opts || {};
-		//var fsPath = opts.fsPath || "./data";
-		var fsPath = opts.fsPath || "/tmp";
-		var reClean = opts.reClean || /[^-._a-z0-9]+/g;
-
-		var cb = function(err, o) {
-			o = o || {};
-				o.error = err;
-			var j = o2j(o);
-			res.writeHead(200, {
-				"Access-Control-Allow-Origin": "*",
-				"Access-Control-Max-Age": "0",
-				"Content-Type": "application/json",
-				"Content-Length": j.length
-			})
-			res.end(j)
-
-			// XXX callback to 
-			if(opts.cb) {
-				opts.cb(err, path);
-			}
-		}
-
-		if( req.method !== "POST" ) {
-			return cb( "Unsupported method" );
-		}
-
-		var u = require("url").parse(req.url, true)
-		var query = u.query
-
-		var file = query.file || "";
-		file = file.toLowerCase().replace(reClean, "_")
-		if(!file)
-			return cb("No file");
-		if(file.match("/\.\./"))
-			return cb("Naughty file name: "+file);
-
-		seq += 1;
-		var ext = require("path").extname(file)
-		var hash = ( sha1( file + ((new Date()).getTime()) + seq ) ).toLowerCase();
-
-		var file = hash + "_" + file;
-
-
-		var path = fsPath + "/" + file;
-
-
-		var ws = require("fs").createWriteStream(path)
-
-		req.soFar = 0;
-
-		req.addListener("data", function(d) {
-			req.soFar += d.length;
-			ws.write(d, "binary")
-		})
-		
-		req.addListener("end", function() {
-			ws.end() 
-			require("fs").chmodSync( path, 0444 );
-			console.log("file uploaded: "+path);
-			cb(null, { file: file, size: req.soFar });
-			setTimeout( function() {
-				require("fs").unlink( path );
-			}, 15 * 1000 ); // you have this long to do something with it!
-		})
-
+	var sha1 = function( s ) {
+		var h = crypto.createHash( "sha1" );
+		h.update( s );
+		return h.digest( "hex" );
 	}
 
 
-	if(require.main === module) {
+	var optsDefault = {
+		seq: 0,
+		rmSecs: 15,
+		tmpDir: "/tmp",
+		reClean: /[^-._a-z0-9]+/g,
+		cleanRep: /[^-._a-z0-9]+/g,
+		cbUpload: null,
+	};
 
-		//
-		// test mode!
-		//
-	
-		var testPort = 4080;
-		require('http').createServer(function(req, res) {
-			console.log(req.method + " " + req.url);
-			var u = require("url").parse(req.url, true)
+	var optsMerged = function( optsIn ) {
+		var opts =  {};
+		for( var k in optsDefault ) {
+			opts[ k ] = optsDefault[ k ];
+		}
+		if( optsIn ) {
+			for( var k in optsIn ) {
+				opts[ k ] = optsIn[ k ];
+			}
+		}
+		return opts;
+	}
 
-			var path = u.pathname.substr(1);
-			if(path == "") {
-				if(u.query.file) {
-					exports.handleUpload(req, res);
+	exports.createServer = function( optsIn ) {
+
+		var opts = optsMerged( optsIn );
+
+		var handleUpload = function(req, res) {
+
+			var cb = function(err, o) {
+
+				o = o || {};
+				o.error = err;
+
+				var j = o2j(o);
+
+				res.writeHead(200, {
+					"Access-Control-Allow-Origin": "*",
+					"Access-Control-Max-Age": "0",
+					"Content-Type": "application/json",
+					"Content-Length": j.length
+				})
+
+				res.end( j )
+
+				if( opts.cbUpload ) {
+					opts.cbUpload( err, o );
+				}
+			}
+
+			if( req.method !== "POST" ) {
+				return cb( "Unsupported method" );
+			}
+
+			var u = url.parse(req.url, true)
+			var query = u.query
+
+			var file = query.file || "";
+			file = file.toLowerCase().replace( opts.reClean, opts.cleanRep )
+			if(!file)
+				return cb("No file");
+			if(file.match("/\.\./"))
+				return cb("Naughty file name: "+file);
+
+			opts.seq += 1;
+			var ext = path.extname(file)
+			var hash = ( sha1( file + ((new Date()).getTime()) + opts.seq ) ).toLowerCase();
+
+			var file = hash + "_" + file;
+
+			var fspath = opts.tmpDir + "/" + file;
+
+			var ws = fs.createWriteStream(fspath)
+
+			req.soFar = 0;
+
+			req.addListener("data", function(d) {
+				req.soFar += d.length;
+				ws.write(d, "binary")
+			})
+			
+			req.addListener("end", function() {
+				ws.end() 
+				fs.chmodSync( fspath, 0444 );
+				log( "uploaded: " + fspath );
+				cb(null, { file: file, size: req.soFar });
+				setTimeout( function() {
+					fs.unlink( fspath );
+				}, opts.rmSecs * 1000 ); // you have this long to do something with it!
+			})
+		}
+
+		var server = http.createServer( function( req, res ) {
+
+			log(req.method + " " + req.url);
+
+			var u = url.parse(req.url, true)
+
+			var fspath = u.pathname.substr(1);
+			if( fspath == "" ) {
+
+				if( u.query.file ) {
+					handleUpload( req, res );
 					return;
 				}
-				path = "index.html";
+
+				fspath = "index.html";
+				// falling through
 			}
-			require("fs").readFile(path, function(err, data) {
+
+			fs.readFile( fspath, function(err, data ) {
+
 				if(err) {
-					res.end("File not found: "+path);
+					res.end("File not found: "+fspath);
 				}
 				else {
+
 					var mime = "text/html";
-					if(path.substr(-3) == ".js")
+					if( fspath.substr( -3 ) == ".js" ) {
 						mime = "application/javascript";
-					res.writeHead(200, {
+					}
+
+					res.writeHead( 200, {
 						"Content-Type": mime,
 						"Content-Length": data.length
-					})
-					res.end(data);
+					} )
+
+					res.end( data );
 				}
 			})
-		}).listen(testPort);
-		console.log("listening on "+testPort);
+
+		})
+		
+		return server;
+	}
+
+	if(require.main === module) {
+		var server = exports.createServer().listen( 4080 );
 	}
 
 }
