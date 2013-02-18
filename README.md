@@ -48,7 +48,8 @@ And then call the target() function within the object with a DOM element:
 At this point, you can now drag and drop files onto the target element
 to upload a file.
 
-The "cbSent" function receives an object, which looks something like this:
+When a file is successfully uploade, 
+the "cbSent" function receives an object, that looks something like this:
 
 	{
 		"error":null,
@@ -59,9 +60,9 @@ The "cbSent" function receives an object, which looks something like this:
 		"remoteSize":11100
 	}
 
-The uploaded file will be in "/tmp" on the server machine and it will have the name
-indicated by "remoteName".
-The remoteName may differ from the name of the file dropped into the browser.
+The uploaded file will be found at "/tmp/a7ac539356be4e5f8a74e5f8a72e08b_foo.jpg"
+on the server.
+Note that remoteName will differ from the name of the file dropped into the browser.
 
 If "error" is not null, then it will be a description of what went wrong.
 Otherwise, the upload succeeded.
