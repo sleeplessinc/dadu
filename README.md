@@ -71,7 +71,7 @@ Otherwise, the upload succeeded.
 
 ## Your Component
 
-When th "cbSent" function is called with no error, it's now up to you to deal with
+When the "cbSent" function is called with no error, it's now up to you to deal with
 it somehow, and you have to do so within 60 seconds. After that time, the uploaded
 copy in "/tmp" is deleted.
 
@@ -80,7 +80,8 @@ supplying it the "remoteName".  The PHP script can then copy the file from the
 "/tmp" dir to its final location.
 
 Another option is for the dadu server to be instantiated manually and given a callback
-function.  That callback function can then do something with the uploaded file.
+function.  That callback function can then do something with the uploaded file rather
+than relying on the browser to call back to the server again.
 See the "Server: Advanced" section below.
 
 
